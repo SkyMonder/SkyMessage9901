@@ -1008,6 +1008,7 @@
             let microphones = [];
             let callTimeout = null;
             let isSearching = false;
+            let refreshInterval = null;
             
             // Инициализация приложения
             initApp();
@@ -1046,7 +1047,7 @@
                     const usersData = localStorage.getItem('skyMessageAllUsers');
                     if (usersData) {
                         allUsers = JSON.parse(usersData);
-                        console.log('Загружено пользователей:', allUsers.length);
+                        console.log('Загружено пользователей из localStorage:', allUsers.length);
                     } else {
                         allUsers = [];
                         // Создаем несколько демо-пользователей для тестирования
@@ -1063,59 +1064,116 @@
             function createDemoUsers() {
                 const demoUsers = [
                     {
-                        id: 'demo1',
+                        id: 'demo1_' + Date.now(),
                         username: "alex_sky",
                         name: "Александр",
                         avatar: "А",
                         password: "password123",
                         status: "online",
-                        lastSeen: "только что"
+                        lastSeen: "только что",
+                        online: true
                     },
                     {
-                        id: 'demo2',
+                        id: 'demo2_' + Date.now(),
                         username: "maria_chat",
                         name: "Мария",
                         avatar: "М",
                         password: "password123",
                         status: "online",
-                        lastSeen: "5 минут назад"
+                        lastSeen: "5 минут назад",
+                        online: true
                     },
                     {
-                        id: 'demo3',
+                        id: 'demo3_' + Date.now(),
                         username: "max_talk",
                         name: "Максим",
                         avatar: "М",
                         password: "password123",
                         status: "offline",
-                        lastSeen: "2 часа назад"
+                        lastSeen: "2 часа назад",
+                        online: false
                     },
                     {
-                        id: 'demo4',
+                        id: 'demo4_' + Date.now(),
                         username: "anna_web",
                         name: "Анна",
                         avatar: "А",
                         password: "password123",
                         status: "online",
-                        lastSeen: "в сети"
+                        lastSeen: "в сети",
+                        online: true
                     },
                     {
-                        id: 'demo5',
+                        id: 'demo5_' + Date.now(),
                         username: "dmitry_conn",
                         name: "Дмитрий",
                         avatar: "Д",
                         password: "password123",
                         status: "offline",
-                        lastSeen: "вчера"
+                        lastSeen: "вчера",
+                        online: false
+                    },
+                    {
+                        id: 'demo6_' + Date.now(),
+                        username: "olga_sky",
+                        name: "Ольга",
+                        avatar: "О",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "только что",
+                        online: true
+                    },
+                    {
+                        id: 'demo7_' + Date.now(),
+                        username: "ivan_mess",
+                        name: "Иван",
+                        avatar: "И",
+                        password: "password123",
+                        status: "offline",
+                        lastSeen: "30 минут назад",
+                        online: false
+                    },
+                    {
+                        id: 'demo8_' + Date.now(),
+                        username: "sveta_chat",
+                        name: "Светлана",
+                        avatar: "С",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "в сети",
+                        online: true
+                    },
+                    {
+                        id: 'demo9_' + Date.now(),
+                        username: "petr_web",
+                        name: "Пётр",
+                        avatar: "П",
+                        password: "password123",
+                        status: "offline",
+                        lastSeen: "сегодня",
+                        online: false
+                    },
+                    {
+                        id: 'demo10_' + Date.now(),
+                        username: "katy_msg",
+                        name: "Екатерина",
+                        avatar: "Е",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "только что",
+                        online: true
                     }
                 ];
                 
                 allUsers = demoUsers;
+                console.log('Создано демо-пользователей:', demoUsers.length);
             }
             
             // Сохранение всех пользователей
             function saveAllUsers() {
                 try {
                     localStorage.setItem('skyMessageAllUsers', JSON.stringify(allUsers));
+                    console.log('Сохранено пользователей:', allUsers.length);
                 } catch (e) {
                     console.error('Ошибка сохранения пользователей:', e);
                 }
@@ -1130,6 +1188,21 @@
                         console.log('Загружено контактов:', contacts.length);
                     } else {
                         contacts = [];
+                        // Автоматически добавляем первых 3 демо-пользователя в контакты для удобства
+                        if (allUsers.length > 0) {
+                            const demoContacts = allUsers.slice(0, 3).map(user => ({
+                                id: user.id,
+                                username: user.username,
+                                name: user.name,
+                                avatar: user.avatar,
+                                status: user.online ? 'online' : 'offline',
+                                lastSeen: user.lastSeen,
+                                online: user.online
+                            }));
+                            contacts = demoContacts;
+                            saveContacts();
+                            console.log('Автоматически добавлены демо-контакты:', demoContacts.length);
+                        }
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки контактов:', e);
@@ -1155,6 +1228,30 @@
                         console.log('Загружено сообщений для чатов:', Object.keys(messages).length);
                     } else {
                         messages = {};
+                        // Создаем демо-сообщения для первых контактов
+                        if (contacts.length > 0) {
+                            contacts.forEach((contact, index) => {
+                                const messageList = [
+                                    {
+                                        id: Date.now() + index * 1000,
+                                        text: index === 0 ? "Привет! Как дела?" : "Добрый день!",
+                                        sender: contact.id,
+                                        time: getCurrentTime(),
+                                        outgoing: false
+                                    },
+                                    {
+                                        id: Date.now() + index * 1000 + 1,
+                                        text: index === 0 ? "Привет! Всё отлично, спасибо!" : "Здравствуйте!",
+                                        sender: currentUser.id,
+                                        time: getCurrentTime(),
+                                        outgoing: true
+                                    }
+                                ];
+                                messages[contact.id] = messageList;
+                            });
+                            saveMessages();
+                            console.log('Созданы демо-сообщения для контактов');
+                        }
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки сообщений:', e);
@@ -1329,8 +1426,12 @@
                     username: user.username,
                     name: user.name,
                     avatar: user.avatar,
-                    status: 'online'
+                    status: 'online',
+                    online: true
                 };
+                
+                // Обновляем статус пользователя
+                updateUserStatus(user.id, true);
                 
                 // Сохраняем пользователя в localStorage
                 localStorage.setItem('skyMessageUser', JSON.stringify(currentUser));
@@ -1346,6 +1447,17 @@
                 showNotification('message', 'Добро пожаловать в SkyMessage!', 'Вы успешно вошли в систему.');
                 
                 resetLoginButton(loginButton, originalText);
+            }
+            
+            // Обновление статуса пользователя
+            function updateUserStatus(userId, isOnline) {
+                const userIndex = allUsers.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    allUsers[userIndex].online = isOnline;
+                    allUsers[userIndex].status = isOnline ? 'online' : 'offline';
+                    allUsers[userIndex].lastSeen = isOnline ? 'только что' : allUsers[userIndex].lastSeen;
+                    saveAllUsers();
+                }
             }
             
             function resetLoginButton(button, originalText) {
@@ -1412,7 +1524,8 @@
                     avatar: username.charAt(0).toUpperCase(),
                     password: password,
                     status: 'online',
-                    lastSeen: 'только что'
+                    lastSeen: 'только что',
+                    online: true
                 };
                 
                 // Добавляем пользователя в общий список
@@ -1425,7 +1538,8 @@
                     username: newUser.username,
                     name: newUser.name,
                     avatar: newUser.avatar,
-                    status: 'online'
+                    status: 'online',
+                    online: true
                 };
                 
                 // Сохраняем пользователя в localStorage
@@ -1434,14 +1548,51 @@
                 // Инициализируем контакты и сообщения
                 contacts = [];
                 messages = {};
+                
+                // Автоматически добавляем демо-пользователей в контакты
+                const demoContacts = allUsers
+                    .filter(user => user.id !== currentUser.id)
+                    .slice(0, 5)
+                    .map(user => ({
+                        id: user.id,
+                        username: user.username,
+                        name: user.name,
+                        avatar: user.avatar,
+                        status: user.online ? 'online' : 'offline',
+                        lastSeen: user.lastSeen,
+                        online: user.online
+                    }));
+                
+                contacts = demoContacts;
                 saveContacts();
+                
+                // Создаем демо-сообщения для контактов
+                contacts.forEach((contact, index) => {
+                    const messageList = [
+                        {
+                            id: Date.now() + index * 1000,
+                            text: index === 0 ? "Привет! Добро пожаловать в SkyMessage!" : "Рад видеть вас в нашем мессенджере!",
+                            sender: contact.id,
+                            time: getCurrentTime(),
+                            outgoing: false
+                        },
+                        {
+                            id: Date.now() + index * 1000 + 1,
+                            text: index === 0 ? "Спасибо! Рад присоединиться!" : "Спасибо! Очень крутой мессенджер!",
+                            sender: currentUser.id,
+                            time: getCurrentTime(),
+                            outgoing: true
+                        }
+                    ];
+                    messages[contact.id] = messageList;
+                });
                 saveMessages();
                 
                 // Показываем основной интерфейс
                 showMainInterface();
                 
                 // Показываем уведомление
-                showNotification('message', 'Регистрация успешна!', 'Добро пожаловать в SkyMessage!');
+                showNotification('message', 'Регистрация успешна!', `Добро пожаловать в SkyMessage, ${currentUser.name}! Вам автоматически добавлены контакты для тестирования.`);
                 
                 resetLoginButton(registerButton, originalText);
             }
@@ -1451,6 +1602,17 @@
                 // Завершаем звонок, если он активен
                 if (callInProgress) {
                     endCall();
+                }
+                
+                // Обновляем статус пользователя
+                if (currentUser) {
+                    updateUserStatus(currentUser.id, false);
+                }
+                
+                // Останавливаем интервал обновления
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
                 }
                 
                 // Очищаем данные
@@ -1476,6 +1638,12 @@
                 mainContainer.style.display = 'none';
                 callContainer.style.display = 'none';
                 searchError.style.display = 'none';
+                
+                // Останавливаем интервал обновления
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
             }
             
             // Показать основной интерфейс
@@ -1501,6 +1669,71 @@
                 console.log('Пользователь вошел:', currentUser.username);
                 console.log('Всего пользователей в системе:', allUsers.length);
                 console.log('Контактов пользователя:', contacts.length);
+                
+                // Запускаем автообновление списка пользователей
+                startAutoRefresh();
+            }
+            
+            // Запуск автообновления списка пользователей
+            function startAutoRefresh() {
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                }
+                
+                // Обновляем список пользователей каждую секунду
+                refreshInterval = setInterval(() => {
+                    // Обновляем статусы пользователей случайным образом
+                    updateRandomUserStatuses();
+                    
+                    // Если идет поиск, обновляем результаты
+                    if (searchUserInput.value.trim() !== '') {
+                        searchUsers();
+                    } else {
+                        renderContacts();
+                    }
+                }, 1000);
+            }
+            
+            // Обновление статусов пользователей случайным образом
+            function updateRandomUserStatuses() {
+                allUsers.forEach(user => {
+                    if (user.id !== currentUser.id) {
+                        // 10% вероятность смены статуса
+                        if (Math.random() < 0.1) {
+                            user.online = !user.online;
+                            user.status = user.online ? 'online' : 'offline';
+                            user.lastSeen = user.online ? 'только что' : getRandomLastSeen();
+                        }
+                    }
+                });
+                saveAllUsers();
+                
+                // Обновляем статусы в контактах
+                contacts.forEach(contact => {
+                    const user = allUsers.find(u => u.id === contact.id);
+                    if (user) {
+                        contact.status = user.status;
+                        contact.lastSeen = user.lastSeen;
+                        contact.online = user.online;
+                    }
+                });
+                saveContacts();
+            }
+            
+            // Получение случайного времени последнего посещения
+            function getRandomLastSeen() {
+                const times = [
+                    'только что',
+                    '5 минут назад',
+                    '10 минут назад',
+                    '30 минут назад',
+                    'час назад',
+                    '2 часа назад',
+                    'сегодня',
+                    'вчера',
+                    'недавно'
+                ];
+                return times[Math.floor(Math.random() * times.length)];
             }
             
             // Поиск пользователей
@@ -1515,7 +1748,6 @@
                 }
                 
                 console.log('Поиск пользователей по запросу:', query);
-                console.log('Все пользователи:', allUsers);
                 
                 // Фильтруем пользователей по запросу, исключая текущего пользователя
                 const filteredUsers = allUsers.filter(user => {
@@ -1526,7 +1758,6 @@
                     const matches = user.username.toLowerCase().includes(query) || 
                                    user.name.toLowerCase().includes(query);
                     
-                    console.log(`Пользователь ${user.username} (${user.name}): ${matches ? 'совпадение' : 'нет совпадения'}`);
                     return matches;
                 });
                 
@@ -1557,13 +1788,13 @@
                     contactElement.dataset.userId = contact.id;
                     
                     // Определяем статус
-                    const statusClass = contact.status === 'online' ? 'online' : '';
-                    const lastSeenText = contact.status === 'online' ? 'в сети' : `был(а) ${contact.lastSeen}`;
+                    const statusClass = contact.online ? 'online' : '';
+                    const lastSeenText = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
                     
                     contactElement.innerHTML = `
                         <div class="contact-avatar">${contact.avatar}</div>
                         <div class="contact-info">
-                            <h4>${contact.name}</h4>
+                            <h4>${contact.name} <span style="color: var(--gray-color); font-weight: normal; font-size: 0.8rem;">@${contact.username}</span></h4>
                             <p>${lastSeenText}</p>
                         </div>
                         <div class="contact-status ${statusClass}"></div>
@@ -1602,8 +1833,8 @@
                     userElement.dataset.userId = user.id;
                     
                     // Определяем статус
-                    const statusClass = user.status === 'online' ? 'online' : '';
-                    const lastSeenText = user.status === 'online' ? 'в сети' : `был(а) ${user.lastSeen}`;
+                    const statusClass = user.online ? 'online' : '';
+                    const lastSeenText = user.online ? 'в сети' : `был(а) ${user.lastSeen}`;
                     
                     userElement.innerHTML = `
                         <div class="contact-avatar">${user.avatar}</div>
@@ -1666,7 +1897,7 @@
                 // Обновляем заголовок чата
                 document.getElementById('chatUserName').textContent = contact.name;
                 document.getElementById('chatUserAvatar').textContent = contact.avatar;
-                document.getElementById('chatUserStatus').textContent = contact.status === 'online' ? 'в сети' : `был(а) ${contact.lastSeen}`;
+                document.getElementById('chatUserStatus').textContent = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
                 
                 // Включаем поле ввода и кнопки
                 messageInput.disabled = false;
@@ -1697,12 +1928,34 @@
                     username: user.username,
                     name: user.name,
                     avatar: user.avatar,
-                    status: user.status || 'offline',
-                    lastSeen: user.lastSeen || 'недавно'
+                    status: user.online ? 'online' : 'offline',
+                    lastSeen: user.lastSeen,
+                    online: user.online
                 };
                 
                 contacts.push(contactToAdd);
                 saveContacts();
+                
+                // Создаем начальные сообщения для нового контакта
+                if (!messages[user.id]) {
+                    messages[user.id] = [
+                        {
+                            id: Date.now(),
+                            text: `Привет! Я ${user.name}. Рад познакомиться!`,
+                            sender: user.id,
+                            time: getCurrentTime(),
+                            outgoing: false
+                        },
+                        {
+                            id: Date.now() + 1,
+                            text: `Привет, ${user.name}! Рад познакомиться!`,
+                            sender: currentUser.id,
+                            time: getCurrentTime(),
+                            outgoing: true
+                        }
+                    ];
+                    saveMessages();
+                }
                 
                 // Обновляем отображение контактов
                 renderContacts();
@@ -2348,6 +2601,11 @@
             console.log('3. max_talk - Максим');
             console.log('4. anna_web - Анна');
             console.log('5. dmitry_conn - Дмитрий');
+            console.log('6. olga_sky - Ольга');
+            console.log('7. ivan_mess - Иван');
+            console.log('8. sveta_chat - Светлана');
+            console.log('9. petr_web - Пётр');
+            console.log('10. katy_msg - Екатерина');
             console.log('Для очистки всех данных нажмите Ctrl+Shift+D');
         });
     </script>
