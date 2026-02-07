@@ -1271,14 +1271,14 @@
                                 id: Date.now(),
                                 text: `Привет! Я ${contact.name}. Рад познакомиться!`,
                                 sender: contact.id,
-                                time: getCurrentTime(),
+                                time: this.getCurrentTime(),  // Используем метод класса
                                 outgoing: false
                             },
                             {
                                 id: Date.now() + 1,
                                 text: `Привет, ${contact.name}! Очень приятно!`,
                                 sender: this.currentUser.id,
-                                time: getCurrentTime(),
+                                time: this.getCurrentTime(),  // Используем метод класса
                                 outgoing: true
                             }
                         ];
@@ -1288,6 +1288,12 @@
                 this.saveMessages();
                 
                 console.log('Созданы начальные контакты:', initialContacts.length);
+            },
+            
+            // Получение текущего времени (метод класса)
+            getCurrentTime: function() {
+                const now = new Date();
+                return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             },
             
             // Добавление контакта
@@ -1317,14 +1323,14 @@
                             id: Date.now(),
                             text: `Привет! Я ${user.name}. Рад познакомиться!`,
                             sender: user.id,
-                            time: getCurrentTime(),
+                            time: this.getCurrentTime(),  // Используем метод класса
                             outgoing: false
                         },
                         {
                             id: Date.now() + 1,
                             text: `Привет, ${user.name}! Очень приятно!`,
                             sender: this.currentUser.id,
-                            time: getCurrentTime(),
+                            time: this.getCurrentTime(),  // Используем метод класса
                             outgoing: true
                         }
                     ];
@@ -1906,7 +1912,7 @@
                     id: Date.now(),
                     text: text,
                     sender: UserData.currentUser.id,
-                    time: getCurrentTime(),
+                    time: UserData.getCurrentTime(),  // Используем метод из UserData
                     outgoing: true
                 };
                 
@@ -1922,7 +1928,7 @@
                             id: Date.now() + 1,
                             text: getRandomReply(),
                             sender: currentContact.id,
-                            time: getCurrentTime(),
+                            time: UserData.getCurrentTime(),  // Используем метод из UserData
                             outgoing: false
                         };
                         
@@ -1937,11 +1943,6 @@
             }
             
             // Вспомогательные функции
-            function getCurrentTime() {
-                const now = new Date();
-                return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            }
-            
             function getRandomReply() {
                 const replies = [
                     "Привет! Как дела?",
