@@ -724,9 +724,31 @@
         .visible {
             display: flex;
         }
+        
+        .api-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+        }
+        
+        .api-status.online {
+            background-color: rgba(76, 175, 80, 0.8);
+        }
+        
+        .api-status.offline {
+            background-color: rgba(244, 67, 54, 0.8);
+        }
     </style>
 </head>
 <body>
+    <div class="api-status" id="apiStatus">API: Загрузка...</div>
+    
     <div class="container" id="appContainer">
         <div class="auth-container" id="authContainer">
             <div class="auth-form">
@@ -919,66 +941,209 @@
     </div>
 
     <script>
-        // ===== ГЛОБАЛЬНАЯ БАЗА ДАННЫХ (СИМУЛЯЦИЯ СЕРВЕРА) =====
+        // ===== КОНФИГУРАЦИЯ JSONBIN.IO =====
+        const JSONBIN_CONFIG = {
+            BIN_ID: '6987a97443b1c97be96d38ce', // Замените на ваш ID бина
+            API_KEY: '$2a$10$I2I96lPMR/JKjetj1oc93eTQG.dkoeYEtV1j88hu5qFK8D0yAq6k2', // Это демо ключ
+            BASE_URL: 'https://api.jsonbin.io/v3/b',
+            
+            // Полный URL для работы с JSONBin
+            getBinUrl: function() {
+                return `${this.BASE_URL}/${this.BIN_ID}`;
+            },
+            
+            // Полный URL для обновления бина
+            getUpdateUrl: function() {
+                return `${this.BASE_URL}/${this.BIN_ID}`;
+            },
+            
+            // Полный URL для создания ревизии
+            getLatestUrl: function() {
+                return `${this.BASE_URL}/${this.BIN_ID}/latest`;
+            },
+            
+            // Заголовки для запросов
+            getHeaders: function() {
+                return {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': this.API_KEY,
+                    'X-Bin-Name': 'SkyMessage Users Database'
+                };
+            }
+        };
+        
+        // ===== ГЛОБАЛЬНАЯ БАЗА ДАННЫХ (JSONBIN.IO) =====
         const GlobalDatabase = {
-            // Хранилище в sessionStorage (работает в рамках сессии браузера)
-            STORAGE_KEY: 'skyMessageGlobalDB',
+            // Кэшированные данные
+            cache: {
+                users: [],
+                onlineUsers: {},
+                lastFetch: 0,
+                cacheDuration: 30000 // 30 секунд кэш
+            },
+            
+            // Статус соединения
+            isOnline: false,
             
             // Инициализация
-            init: function() {
-                console.log('Инициализация GlobalDatabase...');
+            init: async function() {
+                console.log('Инициализация GlobalDatabase с JSONBin.io...');
+                this.isOnline = await this.checkConnection();
                 
-                // Пытаемся загрузить из sessionStorage
-                this.loadFromStorage();
+                if (this.isOnline) {
+                    console.log('JSONBin.io доступен, загружаем данные...');
+                    await this.loadFromJsonBin();
+                    this.updateApiStatus(true);
+                } else {
+                    console.warn('JSONBin.io недоступен, используем локальные данные...');
+                    await this.loadFromLocalStorage();
+                    this.updateApiStatus(false);
+                }
                 
                 // Если база пуста, создаем демо-пользователей
                 if (this.isEmpty()) {
                     console.log('База данных пуста, создаем демо-пользователей...');
                     this.createDemoUsers();
-                    this.saveToStorage();
+                    await this.save();
                 }
                 
                 console.log('GlobalDatabase инициализирована. Пользователей:', this.getUsersCount());
             },
             
-            // Загрузка из sessionStorage
-            loadFromStorage: function() {
+            // Проверка соединения с JSONBin
+            checkConnection: async function() {
                 try {
-                    const data = sessionStorage.getItem(this.STORAGE_KEY);
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        this.users = parsed.users || [];
-                        this.onlineUsers = parsed.onlineUsers || {};
-                        console.log('Загружено из sessionStorage:', this.users.length, 'пользователей');
-                    } else {
-                        this.users = [];
-                        this.onlineUsers = {};
-                    }
-                } catch (e) {
-                    console.error('Ошибка загрузки из sessionStorage:', e);
-                    this.users = [];
-                    this.onlineUsers = {};
+                    const response = await fetch(JSONBIN_CONFIG.getLatestUrl(), {
+                        method: 'GET',
+                        headers: JSONBIN_CONFIG.getHeaders()
+                    });
+                    return response.ok;
+                } catch (error) {
+                    console.warn('Ошибка соединения с JSONBin:', error);
+                    return false;
                 }
             },
             
-            // Сохранение в sessionStorage
-            saveToStorage: function() {
+            // Загрузка из JSONBin
+            loadFromJsonBin: async function() {
+                try {
+                    const response = await fetch(JSONBIN_CONFIG.getLatestUrl(), {
+                        method: 'GET',
+                        headers: JSONBIN_CONFIG.getHeaders()
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const dbData = data.record || data;
+                        
+                        this.cache.users = dbData.users || [];
+                        this.cache.onlineUsers = dbData.onlineUsers || {};
+                        this.cache.lastFetch = Date.now();
+                        
+                        // Сохраняем локальную копию
+                        this.saveToLocalStorage();
+                        
+                        console.log('Загружено из JSONBin.io:', this.cache.users.length, 'пользователей');
+                        return true;
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки из JSONBin.io:', error);
+                    return await this.loadFromLocalStorage();
+                }
+            },
+            
+            // Загрузка из localStorage
+            loadFromLocalStorage: function() {
+                try {
+                    const data = localStorage.getItem('skyMessageJsonBinBackup');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        this.cache.users = parsed.users || [];
+                        this.cache.onlineUsers = parsed.onlineUsers || {};
+                        this.cache.lastFetch = Date.now();
+                        console.log('Загружено из localStorage:', this.cache.users.length, 'пользователей');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки из localStorage:', e);
+                }
+                
+                this.cache.users = [];
+                this.cache.onlineUsers = {};
+                return false;
+            },
+            
+            // Сохранение в localStorage
+            saveToLocalStorage: function() {
                 try {
                     const data = {
-                        users: this.users,
-                        onlineUsers: this.onlineUsers,
+                        users: this.cache.users,
+                        onlineUsers: this.cache.onlineUsers,
                         lastUpdate: Date.now()
                     };
-                    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-                    console.log('Сохранено в sessionStorage:', this.users.length, 'пользователей');
+                    localStorage.setItem('skyMessageJsonBinBackup', JSON.stringify(data));
                 } catch (e) {
-                    console.error('Ошибка сохранения в sessionStorage:', e);
+                    console.error('Ошибка сохранения в localStorage:', e);
+                }
+            },
+            
+            // Сохранение в JSONBin
+            saveToJsonBin: async function() {
+                if (!this.isOnline) {
+                    console.log('Офлайн режим, сохраняем только локально');
+                    this.saveToLocalStorage();
+                    return false;
+                }
+                
+                try {
+                    const data = {
+                        users: this.cache.users,
+                        onlineUsers: this.cache.onlineUsers,
+                        lastUpdate: Date.now()
+                    };
+                    
+                    const response = await fetch(JSONBIN_CONFIG.getUpdateUrl(), {
+                        method: 'PUT',
+                        headers: JSONBIN_CONFIG.getHeaders(),
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Успешно сохранено в JSONBin.io');
+                        return true;
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка сохранения в JSONBin.io:', error);
+                    this.saveToLocalStorage();
+                    return false;
+                }
+            },
+            
+            // Общий метод сохранения
+            save: async function() {
+                const savedOnline = await this.saveToJsonBin();
+                if (!savedOnline) {
+                    this.saveToLocalStorage();
+                }
+            },
+            
+            // Обновление статуса API
+            updateApiStatus: function(isOnline) {
+                this.isOnline = isOnline;
+                const statusElement = document.getElementById('apiStatus');
+                if (statusElement) {
+                    statusElement.textContent = isOnline ? 'API: Онлайн (JSONBin.io)' : 'API: Офлайн (локально)';
+                    statusElement.className = isOnline ? 'api-status online' : 'api-status offline';
                 }
             },
             
             // Проверка на пустоту
             isEmpty: function() {
-                return this.users.length === 0;
+                return this.cache.users.length === 0;
             },
             
             // Создание демо-пользователей
@@ -993,7 +1158,8 @@
                         status: "online",
                         lastSeen: "только что",
                         online: true,
-                        registered: Date.now() - 86400000
+                        registered: Date.now() - 86400000,
+                        email: "alex@example.com"
                     },
                     {
                         id: 'demo2',
@@ -1004,7 +1170,8 @@
                         status: "online",
                         lastSeen: "5 минут назад",
                         online: true,
-                        registered: Date.now() - 172800000
+                        registered: Date.now() - 172800000,
+                        email: "maria@example.com"
                     },
                     {
                         id: 'demo3',
@@ -1015,7 +1182,8 @@
                         status: "offline",
                         lastSeen: "2 часа назад",
                         online: false,
-                        registered: Date.now() - 259200000
+                        registered: Date.now() - 259200000,
+                        email: "max@example.com"
                     },
                     {
                         id: 'demo4',
@@ -1026,7 +1194,8 @@
                         status: "online",
                         lastSeen: "в сети",
                         online: true,
-                        registered: Date.now() - 345600000
+                        registered: Date.now() - 345600000,
+                        email: "anna@example.com"
                     },
                     {
                         id: 'demo5',
@@ -1037,116 +1206,126 @@
                         status: "offline",
                         lastSeen: "вчера",
                         online: false,
-                        registered: Date.now() - 432000000
+                        registered: Date.now() - 432000000,
+                        email: "dmitry@example.com"
                     },
                     {
                         id: 'demo6',
-                        username: "test_user",  // Тестовый пользователь для поиска
+                        username: "test_user",
                         name: "Тестовый",
                         avatar: "Т",
                         password: "password123",
                         status: "online",
                         lastSeen: "только что",
                         online: true,
-                        registered: Date.now() - 518400000
-                    },
-                    {
-                        id: 'demo7',
-                        username: "ivan_mess",
-                        name: "Иван",
-                        avatar: "И",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: "30 минут назад",
-                        online: false,
-                        registered: Date.now() - 604800000
+                        registered: Date.now() - 518400000,
+                        email: "test@example.com"
                     }
                 ];
                 
-                this.users = demoUsers;
+                this.cache.users = demoUsers;
                 console.log('Создано демо-пользователей:', demoUsers.length);
             },
             
             // Получение количества пользователей
             getUsersCount: function() {
-                return this.users.length;
+                return this.cache.users.length;
             },
             
             // Поиск пользователя по username
             findUserByUsername: function(username) {
-                return this.users.find(user => user.username === username);
+                return this.cache.users.find(user => user.username === username);
             },
             
             // Проверка существования пользователя
             userExists: function(username) {
-                return this.users.some(user => user.username === username);
+                return this.cache.users.some(user => user.username === username);
             },
             
             // Добавление нового пользователя
-            addUser: function(user) {
+            addUser: async function(user) {
                 // Проверяем, нет ли уже такого пользователя
                 if (this.userExists(user.username)) {
                     console.log('Пользователь уже существует:', user.username);
                     return false;
                 }
                 
-                this.users.push(user);
-                this.saveToStorage();
+                this.cache.users.push(user);
+                await this.save();
                 console.log('Добавлен новый пользователь:', user.username);
                 return true;
             },
             
             // Поиск пользователей (исключая текущего)
             searchUsers: function(query, excludeUserId) {
+                // Проверяем, не устарел ли кэш (только если онлайн)
+                if (this.isOnline && Date.now() - this.cache.lastFetch > this.cache.cacheDuration) {
+                    // В фоне обновляем данные
+                    this.loadFromJsonBin().then(updated => {
+                        if (updated) {
+                            console.log('Данные обновлены из JSONBin.io');
+                        }
+                    });
+                }
+                
                 const searchQuery = query.toLowerCase().trim();
                 if (!searchQuery) return [];
                 
-                return this.users.filter(user => {
+                return this.cache.users.filter(user => {
                     // Пропускаем текущего пользователя
                     if (excludeUserId && user.id === excludeUserId) return false;
                     
                     // Ищем по username и name
                     return user.username.toLowerCase().includes(searchQuery) ||
-                           user.name.toLowerCase().includes(searchQuery);
+                           user.name.toLowerCase().includes(searchQuery) ||
+                           (user.email && user.email.toLowerCase().includes(searchQuery));
                 });
             },
             
             // Получение всех пользователей кроме указанного
             getAllUsersExcept: function(excludeUserId) {
-                if (!excludeUserId) return this.users;
-                return this.users.filter(user => user.id !== excludeUserId);
+                if (!excludeUserId) return this.cache.users;
+                return this.cache.users.filter(user => user.id !== excludeUserId);
             },
             
             // Обновление статуса пользователя
-            updateUserStatus: function(userId, isOnline) {
-                const user = this.users.find(u => u.id === userId);
+            updateUserStatus: async function(userId, isOnline) {
+                const user = this.cache.users.find(u => u.id === userId);
                 if (user) {
                     user.online = isOnline;
                     user.status = isOnline ? 'online' : 'offline';
                     user.lastSeen = isOnline ? 'только что' : user.lastSeen;
-                    this.saveToStorage();
+                    user.lastSeenTimestamp = Date.now();
                     
                     if (isOnline) {
-                        this.onlineUsers[userId] = Date.now();
+                        this.cache.onlineUsers[userId] = Date.now();
                     } else {
-                        delete this.onlineUsers[userId];
+                        delete this.cache.onlineUsers[userId];
                     }
+                    
+                    await this.save();
                 }
             },
             
             // Обновление случайных статусов (для демо)
-            updateRandomStatuses: function() {
-                this.users.forEach(user => {
+            updateRandomStatuses: async function() {
+                let changed = false;
+                
+                this.cache.users.forEach(user => {
                     if (user.id.startsWith('demo')) {
                         // 10% вероятность смены статуса
                         if (Math.random() < 0.1) {
                             user.online = !user.online;
                             user.status = user.online ? 'online' : 'offline';
                             user.lastSeen = user.online ? 'только что' : this.getRandomLastSeen();
+                            changed = true;
                         }
                     }
                 });
-                this.saveToStorage();
+                
+                if (changed) {
+                    await this.save();
+                }
             },
             
             getRandomLastSeen: function() {
@@ -1162,6 +1341,19 @@
                     'недавно'
                 ];
                 return times[Math.floor(Math.random() * times.length)];
+            },
+            
+            // Синхронизация с сервером
+            syncWithServer: async function() {
+                if (!this.isOnline) return false;
+                
+                try {
+                    await this.loadFromJsonBin();
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка синхронизации:', error);
+                    return false;
+                }
             }
         };
         
@@ -1257,7 +1449,8 @@
                     avatar: user.avatar,
                     status: user.online ? 'online' : 'offline',
                     lastSeen: user.lastSeen,
-                    online: user.online
+                    online: user.online,
+                    email: user.email
                 }));
                 
                 this.contacts = initialContacts;
@@ -1271,15 +1464,17 @@
                                 id: Date.now(),
                                 text: `Привет! Я ${contact.name}. Рад познакомиться!`,
                                 sender: contact.id,
-                                time: this.getCurrentTime(),  // Используем метод класса
-                                outgoing: false
+                                time: this.getCurrentTime(),
+                                outgoing: false,
+                                timestamp: Date.now()
                             },
                             {
                                 id: Date.now() + 1,
                                 text: `Привет, ${contact.name}! Очень приятно!`,
                                 sender: this.currentUser.id,
-                                time: this.getCurrentTime(),  // Используем метод класса
-                                outgoing: true
+                                time: this.getCurrentTime(),
+                                outgoing: true,
+                                timestamp: Date.now() + 1
                             }
                         ];
                     }
@@ -1290,7 +1485,7 @@
                 console.log('Созданы начальные контакты:', initialContacts.length);
             },
             
-            // Получение текущего времени (метод класса)
+            // Получение текущего времени
             getCurrentTime: function() {
                 const now = new Date();
                 return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -1310,7 +1505,8 @@
                     avatar: user.avatar,
                     status: user.online ? 'online' : 'offline',
                     lastSeen: user.lastSeen,
-                    online: user.online
+                    online: user.online,
+                    email: user.email
                 };
                 
                 this.contacts.push(contactToAdd);
@@ -1323,15 +1519,17 @@
                             id: Date.now(),
                             text: `Привет! Я ${user.name}. Рад познакомиться!`,
                             sender: user.id,
-                            time: this.getCurrentTime(),  // Используем метод класса
-                            outgoing: false
+                            time: this.getCurrentTime(),
+                            outgoing: false,
+                            timestamp: Date.now()
                         },
                         {
                             id: Date.now() + 1,
                             text: `Привет, ${user.name}! Очень приятно!`,
                             sender: this.currentUser.id,
-                            time: this.getCurrentTime(),  // Используем метод класса
-                            outgoing: true
+                            time: this.getCurrentTime(),
+                            outgoing: true,
+                            timestamp: Date.now() + 1
                         }
                     ];
                     this.saveMessages();
@@ -1365,9 +1563,9 @@
         };
         
         // ===== ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ =====
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Инициализируем базы данных
-            GlobalDatabase.init();
+            await GlobalDatabase.init();
             UserData.init();
             
             // Элементы интерфейса
@@ -1498,7 +1696,7 @@
                 }
                 
                 // Обновляем статус в глобальной базе
-                GlobalDatabase.updateUserStatus(user.id, true);
+                await GlobalDatabase.updateUserStatus(user.id, true);
                 
                 // Устанавливаем текущего пользователя
                 UserData.currentUser = {
@@ -1507,7 +1705,8 @@
                     name: user.name,
                     avatar: user.avatar,
                     status: 'online',
-                    online: true
+                    online: true,
+                    email: user.email
                 };
                 
                 UserData.saveCurrentUser();
@@ -1575,11 +1774,12 @@
                     status: 'online',
                     lastSeen: 'только что',
                     online: true,
-                    registered: Date.now()
+                    registered: Date.now(),
+                    email: username + '@skymessage.com'
                 };
                 
                 // Добавляем в глобальную базу
-                const added = GlobalDatabase.addUser(newUser);
+                const added = await GlobalDatabase.addUser(newUser);
                 if (!added) {
                     showError('registerUsernameError', 'Ошибка регистрации');
                     resetButton(registerButton, originalText);
@@ -1593,7 +1793,8 @@
                     name: newUser.name,
                     avatar: newUser.avatar,
                     status: 'online',
-                    online: true
+                    online: true,
+                    email: newUser.email
                 };
                 
                 UserData.saveCurrentUser();
@@ -1609,7 +1810,7 @@
                 resetButton(registerButton, originalText);
             }
             
-            function logoutUser() {
+            async function logoutUser() {
                 if (refreshInterval) {
                     clearInterval(refreshInterval);
                     refreshInterval = null;
@@ -1617,7 +1818,7 @@
                 
                 // Обновляем статус в глобальной базе
                 if (UserData.currentUser) {
-                    GlobalDatabase.updateUserStatus(UserData.currentUser.id, false);
+                    await GlobalDatabase.updateUserStatus(UserData.currentUser.id, false);
                 }
                 
                 UserData.clear();
@@ -1668,13 +1869,13 @@
                     clearInterval(refreshInterval);
                 }
                 
-                refreshInterval = setInterval(() => {
+                refreshInterval = setInterval(async () => {
                     // Обновляем статусы демо-пользователей
-                    GlobalDatabase.updateRandomStatuses();
+                    await GlobalDatabase.updateRandomStatuses();
                     
                     // Обновляем статусы в контактах
                     UserData.contacts.forEach(contact => {
-                        const user = GlobalDatabase.users.find(u => u.id === contact.id);
+                        const user = GlobalDatabase.cache.users.find(u => u.id === contact.id);
                         if (user) {
                             contact.status = user.status;
                             contact.lastSeen = user.lastSeen;
@@ -1691,11 +1892,16 @@
                     
                     // Если выбран контакт, обновляем его статус
                     if (currentContact) {
-                        const user = GlobalDatabase.users.find(u => u.id === currentContact.id);
+                        const user = GlobalDatabase.cache.users.find(u => u.id === currentContact.id);
                         if (user) {
                             document.getElementById('chatUserStatus').textContent = 
                                 user.online ? 'в сети' : `был(а) ${user.lastSeen}`;
                         }
+                    }
+                    
+                    // Периодически синхронизируем с сервером
+                    if (GlobalDatabase.isOnline && Math.random() < 0.1) { // 10% вероятность
+                        await GlobalDatabase.syncWithServer();
                     }
                 }, 2000);
             }
@@ -1912,8 +2118,9 @@
                     id: Date.now(),
                     text: text,
                     sender: UserData.currentUser.id,
-                    time: UserData.getCurrentTime(),  // Используем метод из UserData
-                    outgoing: true
+                    time: UserData.getCurrentTime(),
+                    outgoing: true,
+                    timestamp: Date.now()
                 };
                 
                 UserData.addMessage(currentContact.id, newMessage);
@@ -1928,8 +2135,9 @@
                             id: Date.now() + 1,
                             text: getRandomReply(),
                             sender: currentContact.id,
-                            time: UserData.getCurrentTime(),  // Используем метод из UserData
-                            outgoing: false
+                            time: UserData.getCurrentTime(),
+                            outgoing: false,
+                            timestamp: Date.now() + 1
                         };
                         
                         UserData.addMessage(currentContact.id, replyMessage);
@@ -2007,13 +2215,19 @@
             
             // Дебаг информация
             console.log('=== SkyMessage Debug Info ===');
+            console.log('API Status:', GlobalDatabase.isOnline ? 'Online (JSONBin.io)' : 'Offline (Local)');
             console.log('Всего пользователей в глобальной базе:', GlobalDatabase.getUsersCount());
             console.log('Демо-пользователи (пароль: password123):');
-            GlobalDatabase.users.forEach((user, index) => {
+            GlobalDatabase.cache.users.forEach((user, index) => {
                 console.log(`${index + 1}. ${user.username} - ${user.name} (${user.online ? 'online' : 'offline'})`);
             });
             console.log('Текущий пользователь:', UserData.currentUser ? UserData.currentUser.username : 'не авторизован');
-            console.log('Для очистки данных нажмите Ctrl+Shift+D');
+            console.log('=== Инструкция ===');
+            console.log('1. Для теста используйте демо-пользователей (пароль: password123)');
+            console.log('2. Или зарегистрируйте нового пользователя');
+            console.log('3. Для очистки данных нажмите Ctrl+Shift+D');
+            console.log('=== Ссылка на JSONBin ===');
+            console.log(`https://jsonbin.io/${JSONBIN_CONFIG.BIN_ID}`);
             
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.shiftKey && e.key === 'D') {
