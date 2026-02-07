@@ -51,7 +51,6 @@
             transition: var(--transition);
         }
 
-        /* Остальные стили такие же как в предыдущей версии */
         .auth-container {
             display: flex;
             width: 100%;
@@ -920,35 +919,66 @@
     </div>
 
     <script>
-        // ===== ГЛОБАЛЬНЫЙ ОБЪЕКТ ДЛЯ ХРАНЕНИЯ ВСЕХ ДАННЫХ =====
-        const SkyMessageDB = {
-            // Все пользователи системы
-            users: [],
+        // ===== ГЛОБАЛЬНАЯ БАЗА ДАННЫХ (СИМУЛЯЦИЯ СЕРВЕРА) =====
+        const GlobalDatabase = {
+            // Хранилище в sessionStorage (работает в рамках сессии браузера)
+            STORAGE_KEY: 'skyMessageGlobalDB',
             
-            // Контакты для каждого пользователя (по username)
-            contacts: {},
-            
-            // Сообщения для каждого пользователя (по username)
-            messages: {},
-            
-            // Текущий авторизованный пользователь
-            currentUser: null,
-            
-            // Инициализация базы данных
+            // Инициализация
             init: function() {
-                console.log('Инициализация SkyMessageDB...');
+                console.log('Инициализация GlobalDatabase...');
                 
-                // Загружаем всех пользователей
-                this.loadAllUsers();
+                // Пытаемся загрузить из sessionStorage
+                this.loadFromStorage();
                 
-                // Если пользователей нет, создаем демо-пользователей
-                if (this.users.length === 0) {
-                    console.log('Создание демо-пользователей...');
+                // Если база пуста, создаем демо-пользователей
+                if (this.isEmpty()) {
+                    console.log('База данных пуста, создаем демо-пользователей...');
                     this.createDemoUsers();
-                    this.saveAllUsers();
+                    this.saveToStorage();
                 }
                 
-                console.log('SkyMessageDB инициализирована. Пользователей:', this.users.length);
+                console.log('GlobalDatabase инициализирована. Пользователей:', this.getUsersCount());
+            },
+            
+            // Загрузка из sessionStorage
+            loadFromStorage: function() {
+                try {
+                    const data = sessionStorage.getItem(this.STORAGE_KEY);
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        this.users = parsed.users || [];
+                        this.onlineUsers = parsed.onlineUsers || {};
+                        console.log('Загружено из sessionStorage:', this.users.length, 'пользователей');
+                    } else {
+                        this.users = [];
+                        this.onlineUsers = {};
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки из sessionStorage:', e);
+                    this.users = [];
+                    this.onlineUsers = {};
+                }
+            },
+            
+            // Сохранение в sessionStorage
+            saveToStorage: function() {
+                try {
+                    const data = {
+                        users: this.users,
+                        onlineUsers: this.onlineUsers,
+                        lastUpdate: Date.now()
+                    };
+                    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+                    console.log('Сохранено в sessionStorage:', this.users.length, 'пользователей');
+                } catch (e) {
+                    console.error('Ошибка сохранения в sessionStorage:', e);
+                }
+            },
+            
+            // Проверка на пустоту
+            isEmpty: function() {
+                return this.users.length === 0;
             },
             
             // Создание демо-пользователей
@@ -963,7 +993,7 @@
                         status: "online",
                         lastSeen: "только что",
                         online: true,
-                        registered: Date.now() - 86400000 // 1 день назад
+                        registered: Date.now() - 86400000
                     },
                     {
                         id: 'demo2',
@@ -974,7 +1004,7 @@
                         status: "online",
                         lastSeen: "5 минут назад",
                         online: true,
-                        registered: Date.now() - 172800000 // 2 дня назад
+                        registered: Date.now() - 172800000
                     },
                     {
                         id: 'demo3',
@@ -985,7 +1015,7 @@
                         status: "offline",
                         lastSeen: "2 часа назад",
                         online: false,
-                        registered: Date.now() - 259200000 // 3 дня назад
+                        registered: Date.now() - 259200000
                     },
                     {
                         id: 'demo4',
@@ -996,7 +1026,7 @@
                         status: "online",
                         lastSeen: "в сети",
                         online: true,
-                        registered: Date.now() - 345600000 // 4 дня назад
+                        registered: Date.now() - 345600000
                     },
                     {
                         id: 'demo5',
@@ -1007,18 +1037,18 @@
                         status: "offline",
                         lastSeen: "вчера",
                         online: false,
-                        registered: Date.now() - 432000000 // 5 дней назад
+                        registered: Date.now() - 432000000
                     },
                     {
                         id: 'demo6',
-                        username: "olga_sky",
-                        name: "Ольга",
-                        avatar: "О",
+                        username: "test_user",  // Тестовый пользователь для поиска
+                        name: "Тестовый",
+                        avatar: "Т",
                         password: "password123",
                         status: "online",
                         lastSeen: "только что",
                         online: true,
-                        registered: Date.now() - 518400000 // 6 дней назад
+                        registered: Date.now() - 518400000
                     },
                     {
                         id: 'demo7',
@@ -1029,7 +1059,7 @@
                         status: "offline",
                         lastSeen: "30 минут назад",
                         online: false,
-                        registered: Date.now() - 604800000 // 7 дней назад
+                        registered: Date.now() - 604800000
                     }
                 ];
                 
@@ -1037,35 +1067,9 @@
                 console.log('Создано демо-пользователей:', demoUsers.length);
             },
             
-            // Загрузка всех пользователей
-            loadAllUsers: function() {
-                try {
-                    const usersData = localStorage.getItem('skyMessageGlobalUsers');
-                    if (usersData) {
-                        this.users = JSON.parse(usersData);
-                        console.log('Загружено пользователей из localStorage:', this.users.length);
-                    }
-                } catch (e) {
-                    console.error('Ошибка загрузки пользователей:', e);
-                    this.users = [];
-                }
-            },
-            
-            // Сохранение всех пользователей
-            saveAllUsers: function() {
-                try {
-                    localStorage.setItem('skyMessageGlobalUsers', JSON.stringify(this.users));
-                    console.log('Сохранено пользователей в localStorage:', this.users.length);
-                } catch (e) {
-                    console.error('Ошибка сохранения пользователей:', e);
-                }
-            },
-            
-            // Добавление нового пользователя
-            addUser: function(user) {
-                this.users.push(user);
-                this.saveAllUsers();
-                console.log('Добавлен новый пользователь:', user.username);
+            // Получение количества пользователей
+            getUsersCount: function() {
+                return this.users.length;
             },
             
             // Поиск пользователя по username
@@ -1073,14 +1077,33 @@
                 return this.users.find(user => user.username === username);
             },
             
-            // Поиск пользователей по запросу (исключая текущего)
+            // Проверка существования пользователя
+            userExists: function(username) {
+                return this.users.some(user => user.username === username);
+            },
+            
+            // Добавление нового пользователя
+            addUser: function(user) {
+                // Проверяем, нет ли уже такого пользователя
+                if (this.userExists(user.username)) {
+                    console.log('Пользователь уже существует:', user.username);
+                    return false;
+                }
+                
+                this.users.push(user);
+                this.saveToStorage();
+                console.log('Добавлен новый пользователь:', user.username);
+                return true;
+            },
+            
+            // Поиск пользователей (исключая текущего)
             searchUsers: function(query, excludeUserId) {
                 const searchQuery = query.toLowerCase().trim();
                 if (!searchQuery) return [];
                 
                 return this.users.filter(user => {
                     // Пропускаем текущего пользователя
-                    if (user.id === excludeUserId) return false;
+                    if (excludeUserId && user.id === excludeUserId) return false;
                     
                     // Ищем по username и name
                     return user.username.toLowerCase().includes(searchQuery) ||
@@ -1088,65 +1111,258 @@
                 });
             },
             
-            // Загрузка контактов пользователя
-            loadUserContacts: function(username) {
+            // Получение всех пользователей кроме указанного
+            getAllUsersExcept: function(excludeUserId) {
+                if (!excludeUserId) return this.users;
+                return this.users.filter(user => user.id !== excludeUserId);
+            },
+            
+            // Обновление статуса пользователя
+            updateUserStatus: function(userId, isOnline) {
+                const user = this.users.find(u => u.id === userId);
+                if (user) {
+                    user.online = isOnline;
+                    user.status = isOnline ? 'online' : 'offline';
+                    user.lastSeen = isOnline ? 'только что' : user.lastSeen;
+                    this.saveToStorage();
+                    
+                    if (isOnline) {
+                        this.onlineUsers[userId] = Date.now();
+                    } else {
+                        delete this.onlineUsers[userId];
+                    }
+                }
+            },
+            
+            // Обновление случайных статусов (для демо)
+            updateRandomStatuses: function() {
+                this.users.forEach(user => {
+                    if (user.id.startsWith('demo')) {
+                        // 10% вероятность смены статуса
+                        if (Math.random() < 0.1) {
+                            user.online = !user.online;
+                            user.status = user.online ? 'online' : 'offline';
+                            user.lastSeen = user.online ? 'только что' : this.getRandomLastSeen();
+                        }
+                    }
+                });
+                this.saveToStorage();
+            },
+            
+            getRandomLastSeen: function() {
+                const times = [
+                    'только что',
+                    '5 минут назад',
+                    '10 минут назад',
+                    '30 минут назад',
+                    'час назад',
+                    '2 часа назад',
+                    'сегодня',
+                    'вчера',
+                    'недавно'
+                ];
+                return times[Math.floor(Math.random() * times.length)];
+            }
+        };
+        
+        // ===== ЛОКАЛЬНЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (в localStorage) =====
+        const UserData = {
+            // Текущий пользователь
+            currentUser: null,
+            
+            // Контакты пользователя
+            contacts: [],
+            
+            // Сообщения пользователя
+            messages: {},
+            
+            // Инициализация
+            init: function() {
+                console.log('Инициализация UserData...');
+                this.loadCurrentUser();
+                
+                if (this.currentUser) {
+                    this.loadContacts();
+                    this.loadMessages();
+                }
+            },
+            
+            // Загрузка текущего пользователя
+            loadCurrentUser: function() {
                 try {
-                    const contactsData = localStorage.getItem(`skyMessageContacts_${username}`);
+                    const userData = localStorage.getItem('skyMessageCurrentUser');
+                    if (userData) {
+                        this.currentUser = JSON.parse(userData);
+                        console.log('Загружен текущий пользователь:', this.currentUser.username);
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки текущего пользователя:', e);
+                    this.currentUser = null;
+                }
+            },
+            
+            // Сохранение текущего пользователя
+            saveCurrentUser: function() {
+                if (this.currentUser) {
+                    localStorage.setItem('skyMessageCurrentUser', JSON.stringify(this.currentUser));
+                }
+            },
+            
+            // Загрузка контактов
+            loadContacts: function() {
+                try {
+                    const contactsData = localStorage.getItem(`skyMessageContacts_${this.currentUser.username}`);
                     if (contactsData) {
-                        this.contacts[username] = JSON.parse(contactsData);
-                        return this.contacts[username] || [];
+                        this.contacts = JSON.parse(contactsData);
+                        console.log('Загружено контактов:', this.contacts.length);
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки контактов:', e);
-                }
-                return [];
-            },
-            
-            // Сохранение контактов пользователя
-            saveUserContacts: function(username, contactsList) {
-                try {
-                    this.contacts[username] = contactsList;
-                    localStorage.setItem(`skyMessageContacts_${username}`, JSON.stringify(contactsList));
-                } catch (e) {
-                    console.error('Ошибка сохранения контактов:', e);
+                    this.contacts = [];
                 }
             },
             
-            // Загрузка сообщений пользователя
-            loadUserMessages: function(username) {
+            // Сохранение контактов
+            saveContacts: function() {
+                localStorage.setItem(`skyMessageContacts_${this.currentUser.username}`, JSON.stringify(this.contacts));
+            },
+            
+            // Загрузка сообщений
+            loadMessages: function() {
                 try {
-                    const messagesData = localStorage.getItem(`skyMessageMessages_${username}`);
+                    const messagesData = localStorage.getItem(`skyMessageMessages_${this.currentUser.username}`);
                     if (messagesData) {
-                        this.messages[username] = JSON.parse(messagesData);
-                        return this.messages[username] || {};
+                        this.messages = JSON.parse(messagesData);
+                        console.log('Загружено чатов:', Object.keys(this.messages).length);
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки сообщений:', e);
-                }
-                return {};
-            },
-            
-            // Сохранение сообщений пользователя
-            saveUserMessages: function(username, messagesData) {
-                try {
-                    this.messages[username] = messagesData;
-                    localStorage.setItem(`skyMessageMessages_${username}`, JSON.stringify(messagesData));
-                } catch (e) {
-                    console.error('Ошибка сохранения сообщений:', e);
+                    this.messages = {};
                 }
             },
             
-            // Получение всех пользователей кроме текущего
-            getAllUsersExceptCurrent: function() {
-                if (!this.currentUser) return this.users;
-                return this.users.filter(user => user.id !== this.currentUser.id);
+            // Сохранение сообщений
+            saveMessages: function() {
+                localStorage.setItem(`skyMessageMessages_${this.currentUser.username}`, JSON.stringify(this.messages));
+            },
+            
+            // Создание начальных контактов
+            createInitialContacts: function() {
+                // Берем первых 3 пользователя из глобальной базы
+                const allUsers = GlobalDatabase.getAllUsersExcept(this.currentUser.id);
+                const initialContacts = allUsers.slice(0, 3).map(user => ({
+                    id: user.id,
+                    username: user.username,
+                    name: user.name,
+                    avatar: user.avatar,
+                    status: user.online ? 'online' : 'offline',
+                    lastSeen: user.lastSeen,
+                    online: user.online
+                }));
+                
+                this.contacts = initialContacts;
+                this.saveContacts();
+                
+                // Создаем начальные сообщения
+                initialContacts.forEach(contact => {
+                    if (!this.messages[contact.id]) {
+                        this.messages[contact.id] = [
+                            {
+                                id: Date.now(),
+                                text: `Привет! Я ${contact.name}. Рад познакомиться!`,
+                                sender: contact.id,
+                                time: getCurrentTime(),
+                                outgoing: false
+                            },
+                            {
+                                id: Date.now() + 1,
+                                text: `Привет, ${contact.name}! Очень приятно!`,
+                                sender: this.currentUser.id,
+                                time: getCurrentTime(),
+                                outgoing: true
+                            }
+                        ];
+                    }
+                });
+                
+                this.saveMessages();
+                
+                console.log('Созданы начальные контакты:', initialContacts.length);
+            },
+            
+            // Добавление контакта
+            addContact: function(user) {
+                // Проверяем, не добавлен ли уже
+                if (this.contacts.some(contact => contact.id === user.id)) {
+                    return false;
+                }
+                
+                const contactToAdd = {
+                    id: user.id,
+                    username: user.username,
+                    name: user.name,
+                    avatar: user.avatar,
+                    status: user.online ? 'online' : 'offline',
+                    lastSeen: user.lastSeen,
+                    online: user.online
+                };
+                
+                this.contacts.push(contactToAdd);
+                this.saveContacts();
+                
+                // Создаем начальные сообщения для нового контакта
+                if (!this.messages[user.id]) {
+                    this.messages[user.id] = [
+                        {
+                            id: Date.now(),
+                            text: `Привет! Я ${user.name}. Рад познакомиться!`,
+                            sender: user.id,
+                            time: getCurrentTime(),
+                            outgoing: false
+                        },
+                        {
+                            id: Date.now() + 1,
+                            text: `Привет, ${user.name}! Очень приятно!`,
+                            sender: this.currentUser.id,
+                            time: getCurrentTime(),
+                            outgoing: true
+                        }
+                    ];
+                    this.saveMessages();
+                }
+                
+                return contactToAdd;
+            },
+            
+            // Добавление сообщения
+            addMessage: function(contactId, message) {
+                if (!this.messages[contactId]) {
+                    this.messages[contactId] = [];
+                }
+                
+                this.messages[contactId].push(message);
+                this.saveMessages();
+            },
+            
+            // Получение сообщений контакта
+            getMessages: function(contactId) {
+                return this.messages[contactId] || [];
+            },
+            
+            // Очистка данных
+            clear: function() {
+                this.currentUser = null;
+                this.contacts = [];
+                this.messages = {};
+                localStorage.removeItem('skyMessageCurrentUser');
             }
         };
         
         // ===== ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Инициализируем базу данных
-            SkyMessageDB.init();
+            // Инициализируем базы данных
+            GlobalDatabase.init();
+            UserData.init();
             
             // Элементы интерфейса
             const appContainer = document.getElementById('appContainer');
@@ -1165,97 +1381,18 @@
             const notification = document.getElementById('notification');
             
             // Переменные состояния
-            let currentUser = null;
-            let userContacts = [];
-            let userMessages = {};
             let currentContact = null;
             let refreshInterval = null;
             
             // Проверяем авторизацию
-            checkAuth();
+            if (UserData.currentUser) {
+                showMainInterface();
+            } else {
+                showAuthInterface();
+            }
             
             // Настройка обработчиков событий
             setupEventListeners();
-            
-            function checkAuth() {
-                const savedUser = localStorage.getItem('skyMessageCurrentUser');
-                if (savedUser) {
-                    try {
-                        currentUser = JSON.parse(savedUser);
-                        SkyMessageDB.currentUser = currentUser;
-                        loadUserData();
-                        showMainInterface();
-                    } catch (e) {
-                        console.error('Ошибка загрузки пользователя:', e);
-                        localStorage.removeItem('skyMessageCurrentUser');
-                        showAuthInterface();
-                    }
-                }
-            }
-            
-            function loadUserData() {
-                // Загружаем контакты пользователя
-                userContacts = SkyMessageDB.loadUserContacts(currentUser.username);
-                
-                // Если контактов нет, создаем начальные
-                if (userContacts.length === 0) {
-                    createInitialContacts();
-                }
-                
-                // Загружаем сообщения
-                userMessages = SkyMessageDB.loadUserMessages(currentUser.username);
-                
-                console.log('Загружены данные пользователя:', {
-                    username: currentUser.username,
-                    contacts: userContacts.length,
-                    messages: Object.keys(userMessages).length
-                });
-            }
-            
-            function createInitialContacts() {
-                // Берем первых 3 демо-пользователя в качестве начальных контактов
-                const initialContacts = SkyMessageDB.users
-                    .filter(user => user.id !== currentUser.id)
-                    .slice(0, 3)
-                    .map(user => ({
-                        id: user.id,
-                        username: user.username,
-                        name: user.name,
-                        avatar: user.avatar,
-                        status: user.online ? 'online' : 'offline',
-                        lastSeen: user.lastSeen,
-                        online: user.online
-                    }));
-                
-                userContacts = initialContacts;
-                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
-                
-                // Создаем начальные сообщения
-                initialContacts.forEach(contact => {
-                    if (!userMessages[contact.id]) {
-                        userMessages[contact.id] = [
-                            {
-                                id: Date.now(),
-                                text: `Привет! Я ${contact.name}. Рад познакомиться!`,
-                                sender: contact.id,
-                                time: getCurrentTime(),
-                                outgoing: false
-                            },
-                            {
-                                id: Date.now() + 1,
-                                text: `Привет, ${contact.name}! Очень приятно!`,
-                                sender: currentUser.id,
-                                time: getCurrentTime(),
-                                outgoing: true
-                            }
-                        ];
-                    }
-                });
-                
-                SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
-                
-                console.log('Созданы начальные контакты:', initialContacts.length);
-            }
             
             function setupEventListeners() {
                 // Переключение между формой входа и регистрации
@@ -1300,7 +1437,6 @@
                 const isLoginVisible = !loginForm.classList.contains('hidden');
                 
                 if (isLoginVisible) {
-                    // Переключаемся на регистрацию
                     loginForm.classList.add('hidden');
                     registerForm.classList.remove('hidden');
                     document.getElementById('formTitle').textContent = 'Создайте аккаунт';
@@ -1308,7 +1444,6 @@
                     document.getElementById('toggleText').textContent = 'Уже есть аккаунт?';
                     toggleLink.textContent = 'Войти';
                 } else {
-                    // Переключаемся на вход
                     registerForm.classList.remove('hidden');
                     loginForm.classList.remove('hidden');
                     registerForm.classList.add('hidden');
@@ -1318,7 +1453,6 @@
                     toggleLink.textContent = 'Зарегистрироваться';
                 }
                 
-                // Сбрасываем ошибки
                 document.querySelectorAll('.error-message').forEach(el => {
                     el.style.display = 'none';
                 });
@@ -1329,26 +1463,21 @@
                 const password = document.getElementById('loginPassword').value.trim();
                 const loginButton = document.getElementById('loginButton');
                 
-                // Сбрасываем ошибки
                 hideError('loginUsernameError');
                 hideError('loginPasswordError');
                 
-                // Проверка введенных данных
                 if (!username || !password) {
                     showError('loginUsernameError', 'Заполните все поля');
                     return;
                 }
                 
-                // Показываем индикатор загрузки
                 const originalText = loginButton.innerHTML;
                 loginButton.innerHTML = '<div class="loader"></div>';
                 loginButton.disabled = true;
                 
-                // Имитация задержки сети
                 await delay(300);
                 
-                // Ищем пользователя
-                const user = SkyMessageDB.findUserByUsername(username);
+                const user = GlobalDatabase.findUserByUsername(username);
                 
                 if (!user) {
                     showError('loginUsernameError', 'Пользователь не найден');
@@ -1356,15 +1485,17 @@
                     return;
                 }
                 
-                // Проверяем пароль
                 if (user.password !== password) {
                     showError('loginPasswordError', 'Неверный пароль');
                     resetButton(loginButton, originalText);
                     return;
                 }
                 
-                // Успешный вход
-                currentUser = {
+                // Обновляем статус в глобальной базе
+                GlobalDatabase.updateUserStatus(user.id, true);
+                
+                // Устанавливаем текущего пользователя
+                UserData.currentUser = {
                     id: user.id,
                     username: user.username,
                     name: user.name,
@@ -1373,18 +1504,16 @@
                     online: true
                 };
                 
-                SkyMessageDB.currentUser = currentUser;
+                UserData.saveCurrentUser();
+                UserData.loadContacts();
+                UserData.loadMessages();
                 
-                // Сохраняем текущего пользователя
-                localStorage.setItem('skyMessageCurrentUser', JSON.stringify(currentUser));
+                // Если контактов нет, создаем начальные
+                if (UserData.contacts.length === 0) {
+                    UserData.createInitialContacts();
+                }
                 
-                // Загружаем данные пользователя
-                loadUserData();
-                
-                // Показываем основной интерфейс
                 showMainInterface();
-                
-                // Показываем уведомление
                 showNotification('message', 'Добро пожаловать в SkyMessage!', 'Вы успешно вошли в систему.');
                 
                 resetButton(loginButton, originalText);
@@ -1396,51 +1525,41 @@
                 const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
                 const registerButton = document.getElementById('registerButton');
                 
-                // Сбрасываем ошибки
                 hideError('registerUsernameError');
                 hideError('registerPasswordError');
                 hideError('registerConfirmPasswordError');
                 
-                // Проверка введенных данных
                 if (!username || !password || !confirmPassword) {
                     showError('registerUsernameError', 'Заполните все поля');
                     return;
                 }
                 
-                // Проверка имени пользователя
                 if (username.length < 3) {
                     showError('registerUsernameError', 'Имя пользователя должно содержать минимум 3 символа');
                     return;
                 }
                 
-                // Проверка, занят ли никнейм
-                const usernameTaken = SkyMessageDB.users.some(user => user.username === username);
-                if (usernameTaken) {
+                if (GlobalDatabase.userExists(username)) {
                     showError('registerUsernameError', 'Этот никнейм уже занят');
                     return;
                 }
                 
-                // Проверка пароля
                 if (password.length < 6) {
                     showError('registerPasswordError', 'Пароль должен содержать минимум 6 символов');
                     return;
                 }
                 
-                // Проверка подтверждения пароля
                 if (password !== confirmPassword) {
                     showError('registerConfirmPasswordError', 'Пароли не совпадают');
                     return;
                 }
                 
-                // Показываем индикатор загрузки
                 const originalText = registerButton.innerHTML;
                 registerButton.innerHTML = '<div class="loader"></div>';
                 registerButton.disabled = true;
                 
-                // Имитация задержки сети
                 await delay(300);
                 
-                // Создаем нового пользователя
                 const newUser = {
                     id: 'user_' + Date.now(),
                     username: username,
@@ -1453,11 +1572,16 @@
                     registered: Date.now()
                 };
                 
-                // Добавляем пользователя в систему
-                SkyMessageDB.addUser(newUser);
+                // Добавляем в глобальную базу
+                const added = GlobalDatabase.addUser(newUser);
+                if (!added) {
+                    showError('registerUsernameError', 'Ошибка регистрации');
+                    resetButton(registerButton, originalText);
+                    return;
+                }
                 
                 // Устанавливаем текущего пользователя
-                currentUser = {
+                UserData.currentUser = {
                     id: newUser.id,
                     username: newUser.username,
                     name: newUser.name,
@@ -1466,47 +1590,36 @@
                     online: true
                 };
                 
-                SkyMessageDB.currentUser = currentUser;
-                
-                // Сохраняем текущего пользователя
-                localStorage.setItem('skyMessageCurrentUser', JSON.stringify(currentUser));
-                
-                // Инициализируем данные пользователя
-                userContacts = [];
-                userMessages = {};
+                UserData.saveCurrentUser();
+                UserData.contacts = [];
+                UserData.messages = {};
                 
                 // Создаем начальные контакты
-                createInitialContacts();
+                UserData.createInitialContacts();
                 
-                // Показываем основной интерфейс
                 showMainInterface();
-                
-                // Показываем уведомление
-                showNotification('message', 'Регистрация успешна!', `Добро пожаловать в SkyMessage, ${currentUser.name}!`);
+                showNotification('message', 'Регистрация успешна!', `Добро пожаловать в SkyMessage, ${UserData.currentUser.name}!`);
                 
                 resetButton(registerButton, originalText);
             }
             
             function logoutUser() {
-                // Останавливаем интервал обновления
                 if (refreshInterval) {
                     clearInterval(refreshInterval);
                     refreshInterval = null;
                 }
                 
-                // Очищаем текущего пользователя
-                currentUser = null;
-                SkyMessageDB.currentUser = null;
-                localStorage.removeItem('skyMessageCurrentUser');
+                // Обновляем статус в глобальной базе
+                if (UserData.currentUser) {
+                    GlobalDatabase.updateUserStatus(UserData.currentUser.id, false);
+                }
                 
-                // Показываем интерфейс авторизации
+                UserData.clear();
                 showAuthInterface();
                 
-                // Сбрасываем формы
                 loginForm.reset();
                 registerForm.reset();
                 
-                // Показываем форму входа
                 if (!loginForm.classList.contains('hidden')) {
                     toggleAuthForm();
                 }
@@ -1527,26 +1640,20 @@
                 authContainer.style.display = 'none';
                 mainContainer.style.display = 'flex';
                 
-                // Обновляем информацию о текущем пользователе
-                document.getElementById('currentUserName').textContent = currentUser.name;
-                document.getElementById('currentUserAvatar').textContent = currentUser.avatar;
+                document.getElementById('currentUserName').textContent = UserData.currentUser.name;
+                document.getElementById('currentUserAvatar').textContent = UserData.currentUser.avatar;
                 document.getElementById('currentUserStatus').textContent = 'online';
                 
-                // Отображаем контакты
                 renderContacts();
-                
-                // Сбрасываем текущий чат
                 resetChat();
                 
-                // Сбрасываем поиск
                 searchUserInput.value = '';
                 document.getElementById('searchError').style.display = 'none';
                 
-                console.log('Пользователь вошел:', currentUser.username);
-                console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
-                console.log('Контактов пользователя:', userContacts.length);
+                console.log('Пользователь вошел:', UserData.currentUser.username);
+                console.log('Всего пользователей в глобальной базе:', GlobalDatabase.getUsersCount());
+                console.log('Контактов пользователя:', UserData.contacts.length);
                 
-                // Запускаем автообновление
                 startAutoRefresh();
             }
             
@@ -1556,58 +1663,35 @@
                 }
                 
                 refreshInterval = setInterval(() => {
-                    updateRandomStatuses();
+                    // Обновляем статусы демо-пользователей
+                    GlobalDatabase.updateRandomStatuses();
+                    
+                    // Обновляем статусы в контактах
+                    UserData.contacts.forEach(contact => {
+                        const user = GlobalDatabase.users.find(u => u.id === contact.id);
+                        if (user) {
+                            contact.status = user.status;
+                            contact.lastSeen = user.lastSeen;
+                            contact.online = user.online;
+                        }
+                    });
+                    UserData.saveContacts();
                     
                     if (searchUserInput.value.trim() !== '') {
                         searchUsers(searchUserInput.value);
                     } else {
                         renderContacts();
                     }
-                }, 2000);
-            }
-            
-            function updateRandomStatuses() {
-                // Обновляем статусы демо-пользователей
-                SkyMessageDB.users.forEach(user => {
-                    if (user.id.startsWith('demo')) {
-                        // 15% вероятность смены статуса
-                        if (Math.random() < 0.15) {
-                            user.online = !user.online;
-                            user.status = user.online ? 'online' : 'offline';
-                            user.lastSeen = user.online ? 'только что' : getRandomLastSeen();
+                    
+                    // Если выбран контакт, обновляем его статус
+                    if (currentContact) {
+                        const user = GlobalDatabase.users.find(u => u.id === currentContact.id);
+                        if (user) {
+                            document.getElementById('chatUserStatus').textContent = 
+                                user.online ? 'в сети' : `был(а) ${user.lastSeen}`;
                         }
                     }
-                });
-                
-                // Сохраняем изменения
-                SkyMessageDB.saveAllUsers();
-                
-                // Обновляем статусы в контактах
-                userContacts.forEach(contact => {
-                    const user = SkyMessageDB.users.find(u => u.id === contact.id);
-                    if (user) {
-                        contact.status = user.status;
-                        contact.lastSeen = user.lastSeen;
-                        contact.online = user.online;
-                    }
-                });
-                
-                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
-            }
-            
-            function getRandomLastSeen() {
-                const times = [
-                    'только что',
-                    '5 минут назад',
-                    '10 минут назад',
-                    '30 минут назад',
-                    'час назад',
-                    '2 часа назад',
-                    'сегодня',
-                    'вчера',
-                    'недавно'
-                ];
-                return times[Math.floor(Math.random() * times.length)];
+                }, 2000);
             }
             
             function searchUsers(query) {
@@ -1620,10 +1704,9 @@
                 }
                 
                 console.log('Поиск пользователей по запросу:', query);
-                console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
+                console.log('Всего пользователей в глобальной базе:', GlobalDatabase.getUsersCount());
                 
-                // Ищем пользователей
-                const searchResults = SkyMessageDB.searchUsers(query, currentUser?.id);
+                const searchResults = GlobalDatabase.searchUsers(query, UserData.currentUser?.id);
                 
                 console.log('Найдено пользователей:', searchResults.length);
                 
@@ -1644,7 +1727,7 @@
             function renderContacts() {
                 contactsContainer.innerHTML = '';
                 
-                if (userContacts.length === 0) {
+                if (UserData.contacts.length === 0) {
                     contactsContainer.innerHTML = `
                         <div style="text-align: center; padding: 30px; color: var(--gray-color);">
                             <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
@@ -1655,7 +1738,7 @@
                     return;
                 }
                 
-                userContacts.forEach(contact => {
+                UserData.contacts.forEach(contact => {
                     const contactElement = createContactElement(contact, true);
                     contactsContainer.appendChild(contactElement);
                 });
@@ -1665,7 +1748,7 @@
                 contactsContainer.innerHTML = '';
                 
                 results.forEach(user => {
-                    const isContact = userContacts.some(contact => contact.id === user.id);
+                    const isContact = UserData.contacts.some(contact => contact.id === user.id);
                     const contactElement = createContactElement(user, isContact);
                     contactsContainer.appendChild(contactElement);
                 });
@@ -1705,7 +1788,7 @@
                 contactElement.addEventListener('click', function(e) {
                     if (!e.target.closest('.add-contact-btn')) {
                         if (isContact) {
-                            const contact = userContacts.find(c => c.id === user.id);
+                            const contact = UserData.contacts.find(c => c.id === user.id);
                             if (contact) selectContact(contact);
                         } else {
                             addToContacts(user);
@@ -1717,57 +1800,15 @@
             }
             
             function addToContacts(user) {
-                // Проверяем, не добавлен ли уже пользователь
-                if (userContacts.some(contact => contact.id === user.id)) {
+                const contact = UserData.addContact(user);
+                if (!contact) {
                     showNotification('message', 'Контакт уже добавлен', `${user.name} уже есть в ваших контактах`);
                     return;
                 }
                 
-                // Добавляем пользователя в контакты
-                const contactToAdd = {
-                    id: user.id,
-                    username: user.username,
-                    name: user.name,
-                    avatar: user.avatar,
-                    status: user.online ? 'online' : 'offline',
-                    lastSeen: user.lastSeen,
-                    online: user.online
-                };
-                
-                userContacts.push(contactToAdd);
-                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
-                
-                // Создаем начальные сообщения
-                if (!userMessages[user.id]) {
-                    userMessages[user.id] = [
-                        {
-                            id: Date.now(),
-                            text: `Привет! Я ${user.name}. Рад познакомиться!`,
-                            sender: user.id,
-                            time: getCurrentTime(),
-                            outgoing: false
-                        },
-                        {
-                            id: Date.now() + 1,
-                            text: `Привет, ${user.name}! Очень приятно!`,
-                            sender: currentUser.id,
-                            time: getCurrentTime(),
-                            outgoing: true
-                        }
-                    ];
-                    SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
-                }
-                
-                // Обновляем отображение
                 renderContacts();
-                
-                // Показываем уведомление
                 showNotification('message', 'Контакт добавлен', `${user.name} добавлен(а) в ваши контакты`);
-                
-                // Выбираем добавленный контакт
-                selectContact(contactToAdd);
-                
-                // Сбрасываем поиск
+                selectContact(contact);
                 searchUserInput.value = '';
             }
             
@@ -1827,7 +1868,7 @@
             }
             
             function renderMessages(contactId) {
-                const messageList = userMessages[contactId] || [];
+                const messageList = UserData.getMessages(contactId);
                 
                 messagesContainer.innerHTML = '';
                 
@@ -1864,25 +1905,19 @@
                 const newMessage = {
                     id: Date.now(),
                     text: text,
-                    sender: currentUser.id,
+                    sender: UserData.currentUser.id,
                     time: getCurrentTime(),
                     outgoing: true
                 };
                 
-                if (!userMessages[currentContact.id]) {
-                    userMessages[currentContact.id] = [];
-                }
-                
-                userMessages[currentContact.id].push(newMessage);
-                SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
-                
+                UserData.addMessage(currentContact.id, newMessage);
                 renderMessages(currentContact.id);
                 
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 
                 setTimeout(() => {
-                    if (currentContact && currentContact.id === currentContact.id) {
+                    if (currentContact) {
                         const replyMessage = {
                             id: Date.now() + 1,
                             text: getRandomReply(),
@@ -1891,9 +1926,7 @@
                             outgoing: false
                         };
                         
-                        userMessages[currentContact.id].push(replyMessage);
-                        SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
-                        
+                        UserData.addMessage(currentContact.id, replyMessage);
                         renderMessages(currentContact.id);
                         
                         if (document.hidden) {
@@ -1973,19 +2006,19 @@
             
             // Дебаг информация
             console.log('=== SkyMessage Debug Info ===');
-            console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
+            console.log('Всего пользователей в глобальной базе:', GlobalDatabase.getUsersCount());
             console.log('Демо-пользователи (пароль: password123):');
-            SkyMessageDB.users.forEach((user, index) => {
-                if (user.id.startsWith('demo')) {
-                    console.log(`${index + 1}. ${user.username} - ${user.name}`);
-                }
+            GlobalDatabase.users.forEach((user, index) => {
+                console.log(`${index + 1}. ${user.username} - ${user.name} (${user.online ? 'online' : 'offline'})`);
             });
+            console.log('Текущий пользователь:', UserData.currentUser ? UserData.currentUser.username : 'не авторизован');
             console.log('Для очистки данных нажмите Ctrl+Shift+D');
             
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                    if (confirm('Очистить все данные приложения?')) {
+                    if (confirm('Очистить ВСЕ данные приложения?')) {
                         localStorage.clear();
+                        sessionStorage.clear();
                         location.reload();
                     }
                 }
