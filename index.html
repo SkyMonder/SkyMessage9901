@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Все стили остаются те же */
         * {
             margin: 0;
             padding: 0;
@@ -50,7 +51,7 @@
             transition: var(--transition);
         }
 
-        /* Авторизация */
+        /* Остальные стили такие же как в предыдущей версии */
         .auth-container {
             display: flex;
             width: 100%;
@@ -75,19 +76,6 @@
             align-items: center;
             padding: 40px;
             color: white;
-        }
-
-        .auth-illustration h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        .auth-illustration p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            text-align: center;
-            line-height: 1.6;
         }
 
         .logo {
@@ -228,14 +216,12 @@
             display: none;
         }
 
-        /* Основной интерфейс мессенджера */
         .main-container {
             display: none;
             width: 100%;
             height: 100%;
         }
 
-        /* Боковая панель контактов */
         .sidebar {
             width: 350px;
             background-color: #f8f9fa;
@@ -367,7 +353,6 @@
             background-color: #4caf50;
         }
 
-        /* Область чата */
         .chat-container {
             flex: 1;
             display: flex;
@@ -472,7 +457,6 @@
             transform: scale(1.05);
         }
 
-        /* Окно звонка */
         .call-container {
             display: none;
             position: fixed;
@@ -606,7 +590,6 @@
             border: none;
         }
 
-        /* Уведомления */
         .notification {
             position: fixed;
             bottom: 20px;
@@ -663,7 +646,6 @@
             margin-top: 10px;
         }
 
-        /* Загрузка */
         .loader {
             display: inline-block;
             width: 20px;
@@ -679,7 +661,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Адаптивность */
         @media (max-width: 768px) {
             .container {
                 height: 95vh;
@@ -727,7 +708,6 @@
             }
         }
 
-        /* Анимации */
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -738,7 +718,6 @@
             animation: pulse 2s infinite;
         }
 
-        /* Скрытые элементы */
         .hidden {
             display: none !important;
         }
@@ -749,9 +728,7 @@
     </style>
 </head>
 <body>
-    <!-- Контейнер приложения -->
     <div class="container" id="appContainer">
-        <!-- Экран авторизации -->
         <div class="auth-container" id="authContainer">
             <div class="auth-form">
                 <div class="logo">
@@ -821,9 +798,7 @@
             </div>
         </div>
         
-        <!-- Основной интерфейс мессенджера -->
         <div class="main-container" id="mainContainer">
-            <!-- Боковая панель контактов -->
             <div class="sidebar">
                 <div class="user-info">
                     <div class="user-avatar" id="currentUserAvatar">U</div>
@@ -845,11 +820,9 @@
                 </div>
                 
                 <div class="contacts-container" id="contactsContainer">
-                    <!-- Контакты будут добавляться здесь динамически -->
                 </div>
             </div>
             
-            <!-- Область чата -->
             <div class="chat-container">
                 <div class="chat-header" id="chatHeader">
                     <div class="chat-user-info">
@@ -871,7 +844,6 @@
                 </div>
                 
                 <div class="messages-container" id="messagesContainer">
-                    <!-- Сообщения будут добавляться здесь динамически -->
                     <div style="text-align: center; margin-top: 50px; color: var(--gray-color);">
                         <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
                         <p>Выберите чат для начала общения</p>
@@ -888,7 +860,6 @@
         </div>
     </div>
     
-    <!-- Окно звонка -->
     <div class="call-container" id="callContainer">
         <div class="call-info">
             <h2 id="callTitle">Входящий видеозвонок</h2>
@@ -937,7 +908,6 @@
         </div>
     </div>
     
-    <!-- Уведомления -->
     <div class="notification" id="notification">
         <div class="notification-icon">
             <i class="fas fa-bell"></i>
@@ -950,8 +920,234 @@
     </div>
 
     <script>
-        // Основной код приложения
+        // ===== ГЛОБАЛЬНЫЙ ОБЪЕКТ ДЛЯ ХРАНЕНИЯ ВСЕХ ДАННЫХ =====
+        const SkyMessageDB = {
+            // Все пользователи системы
+            users: [],
+            
+            // Контакты для каждого пользователя (по username)
+            contacts: {},
+            
+            // Сообщения для каждого пользователя (по username)
+            messages: {},
+            
+            // Текущий авторизованный пользователь
+            currentUser: null,
+            
+            // Инициализация базы данных
+            init: function() {
+                console.log('Инициализация SkyMessageDB...');
+                
+                // Загружаем всех пользователей
+                this.loadAllUsers();
+                
+                // Если пользователей нет, создаем демо-пользователей
+                if (this.users.length === 0) {
+                    console.log('Создание демо-пользователей...');
+                    this.createDemoUsers();
+                    this.saveAllUsers();
+                }
+                
+                console.log('SkyMessageDB инициализирована. Пользователей:', this.users.length);
+            },
+            
+            // Создание демо-пользователей
+            createDemoUsers: function() {
+                const demoUsers = [
+                    {
+                        id: 'demo1',
+                        username: "alex_sky",
+                        name: "Александр",
+                        avatar: "А",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "только что",
+                        online: true,
+                        registered: Date.now() - 86400000 // 1 день назад
+                    },
+                    {
+                        id: 'demo2',
+                        username: "maria_chat",
+                        name: "Мария",
+                        avatar: "М",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "5 минут назад",
+                        online: true,
+                        registered: Date.now() - 172800000 // 2 дня назад
+                    },
+                    {
+                        id: 'demo3',
+                        username: "max_talk",
+                        name: "Максим",
+                        avatar: "М",
+                        password: "password123",
+                        status: "offline",
+                        lastSeen: "2 часа назад",
+                        online: false,
+                        registered: Date.now() - 259200000 // 3 дня назад
+                    },
+                    {
+                        id: 'demo4',
+                        username: "anna_web",
+                        name: "Анна",
+                        avatar: "А",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "в сети",
+                        online: true,
+                        registered: Date.now() - 345600000 // 4 дня назад
+                    },
+                    {
+                        id: 'demo5',
+                        username: "dmitry_conn",
+                        name: "Дмитрий",
+                        avatar: "Д",
+                        password: "password123",
+                        status: "offline",
+                        lastSeen: "вчера",
+                        online: false,
+                        registered: Date.now() - 432000000 // 5 дней назад
+                    },
+                    {
+                        id: 'demo6',
+                        username: "olga_sky",
+                        name: "Ольга",
+                        avatar: "О",
+                        password: "password123",
+                        status: "online",
+                        lastSeen: "только что",
+                        online: true,
+                        registered: Date.now() - 518400000 // 6 дней назад
+                    },
+                    {
+                        id: 'demo7',
+                        username: "ivan_mess",
+                        name: "Иван",
+                        avatar: "И",
+                        password: "password123",
+                        status: "offline",
+                        lastSeen: "30 минут назад",
+                        online: false,
+                        registered: Date.now() - 604800000 // 7 дней назад
+                    }
+                ];
+                
+                this.users = demoUsers;
+                console.log('Создано демо-пользователей:', demoUsers.length);
+            },
+            
+            // Загрузка всех пользователей
+            loadAllUsers: function() {
+                try {
+                    const usersData = localStorage.getItem('skyMessageGlobalUsers');
+                    if (usersData) {
+                        this.users = JSON.parse(usersData);
+                        console.log('Загружено пользователей из localStorage:', this.users.length);
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки пользователей:', e);
+                    this.users = [];
+                }
+            },
+            
+            // Сохранение всех пользователей
+            saveAllUsers: function() {
+                try {
+                    localStorage.setItem('skyMessageGlobalUsers', JSON.stringify(this.users));
+                    console.log('Сохранено пользователей в localStorage:', this.users.length);
+                } catch (e) {
+                    console.error('Ошибка сохранения пользователей:', e);
+                }
+            },
+            
+            // Добавление нового пользователя
+            addUser: function(user) {
+                this.users.push(user);
+                this.saveAllUsers();
+                console.log('Добавлен новый пользователь:', user.username);
+            },
+            
+            // Поиск пользователя по username
+            findUserByUsername: function(username) {
+                return this.users.find(user => user.username === username);
+            },
+            
+            // Поиск пользователей по запросу (исключая текущего)
+            searchUsers: function(query, excludeUserId) {
+                const searchQuery = query.toLowerCase().trim();
+                if (!searchQuery) return [];
+                
+                return this.users.filter(user => {
+                    // Пропускаем текущего пользователя
+                    if (user.id === excludeUserId) return false;
+                    
+                    // Ищем по username и name
+                    return user.username.toLowerCase().includes(searchQuery) ||
+                           user.name.toLowerCase().includes(searchQuery);
+                });
+            },
+            
+            // Загрузка контактов пользователя
+            loadUserContacts: function(username) {
+                try {
+                    const contactsData = localStorage.getItem(`skyMessageContacts_${username}`);
+                    if (contactsData) {
+                        this.contacts[username] = JSON.parse(contactsData);
+                        return this.contacts[username] || [];
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки контактов:', e);
+                }
+                return [];
+            },
+            
+            // Сохранение контактов пользователя
+            saveUserContacts: function(username, contactsList) {
+                try {
+                    this.contacts[username] = contactsList;
+                    localStorage.setItem(`skyMessageContacts_${username}`, JSON.stringify(contactsList));
+                } catch (e) {
+                    console.error('Ошибка сохранения контактов:', e);
+                }
+            },
+            
+            // Загрузка сообщений пользователя
+            loadUserMessages: function(username) {
+                try {
+                    const messagesData = localStorage.getItem(`skyMessageMessages_${username}`);
+                    if (messagesData) {
+                        this.messages[username] = JSON.parse(messagesData);
+                        return this.messages[username] || {};
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки сообщений:', e);
+                }
+                return {};
+            },
+            
+            // Сохранение сообщений пользователя
+            saveUserMessages: function(username, messagesData) {
+                try {
+                    this.messages[username] = messagesData;
+                    localStorage.setItem(`skyMessageMessages_${username}`, JSON.stringify(messagesData));
+                } catch (e) {
+                    console.error('Ошибка сохранения сообщений:', e);
+                }
+            },
+            
+            // Получение всех пользователей кроме текущего
+            getAllUsersExceptCurrent: function() {
+                if (!this.currentUser) return this.users;
+                return this.users.filter(user => user.id !== this.currentUser.id);
+            }
+        };
+        
+        // ===== ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ =====
         document.addEventListener('DOMContentLoaded', function() {
+            // Инициализируем базу данных
+            SkyMessageDB.init();
+            
             // Элементы интерфейса
             const appContainer = document.getElementById('appContainer');
             const authContainer = document.getElementById('authContainer');
@@ -959,9 +1155,6 @@
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
             const toggleLink = document.getElementById('toggleLink');
-            const toggleText = document.getElementById('toggleText');
-            const formTitle = document.getElementById('formTitle');
-            const formSubtitle = document.getElementById('formSubtitle');
             const logoutButton = document.getElementById('logoutButton');
             const searchUserInput = document.getElementById('searchUser');
             const contactsContainer = document.getElementById('contactsContainer');
@@ -969,306 +1162,101 @@
             const messagesContainer = document.getElementById('messagesContainer');
             const messageInput = document.getElementById('messageInput');
             const sendMessageButton = document.getElementById('sendMessageButton');
-            const voiceCallButton = document.getElementById('voiceCallButton');
-            const videoCallButton = document.getElementById('videoCallButton');
-            const callContainer = document.getElementById('callContainer');
-            const acceptCallButton = document.getElementById('acceptCallButton');
-            const declineCallButton = document.getElementById('declineCallButton');
-            const endCallButton = document.getElementById('endCallButton');
-            const toggleVideoButton = document.getElementById('toggleVideoButton');
-            const toggleAudioButton = document.getElementById('toggleAudioButton');
-            const cameraSelect = document.getElementById('cameraSelect');
-            const microphoneSelect = document.getElementById('microphoneSelect');
-            const localVideo = document.getElementById('localVideo');
-            const remoteVideo = document.getElementById('remoteVideo');
-            const callTitle = document.getElementById('callTitle');
-            const callDescription = document.getElementById('callDescription');
-            const remoteUserName = document.getElementById('remoteUserName');
             const notification = document.getElementById('notification');
-            const notificationTitle = document.getElementById('notificationTitle');
-            const notificationText = document.getElementById('notificationText');
-            const notificationActions = document.getElementById('notificationActions');
-            const searchError = document.getElementById('searchError');
             
-            // Переменные состояния приложения
+            // Переменные состояния
             let currentUser = null;
-            let allUsers = [];
-            let contacts = [];
+            let userContacts = [];
+            let userMessages = {};
             let currentContact = null;
-            let messages = {};
-            let peerConnection = null;
-            let localStream = null;
-            let remoteStream = null;
-            let isCaller = false;
-            let callInProgress = false;
-            let currentCallType = null; // 'video' или 'voice'
-            let isVideoEnabled = true;
-            let isAudioEnabled = true;
-            let cameras = [];
-            let microphones = [];
-            let callTimeout = null;
-            let isSearching = false;
             let refreshInterval = null;
             
-            // Инициализация приложения
-            initApp();
+            // Проверяем авторизацию
+            checkAuth();
             
-            // Функция инициализации
-            function initApp() {
-                // Проверяем, авторизован ли пользователь
-                const savedUser = localStorage.getItem('skyMessageUser');
+            // Настройка обработчиков событий
+            setupEventListeners();
+            
+            function checkAuth() {
+                const savedUser = localStorage.getItem('skyMessageCurrentUser');
                 if (savedUser) {
                     try {
                         currentUser = JSON.parse(savedUser);
-                        // Загружаем всех пользователей
-                        loadAllUsers();
-                        // Загружаем контакты текущего пользователя
-                        loadContacts();
-                        // Загружаем сообщения
-                        loadMessages();
+                        SkyMessageDB.currentUser = currentUser;
+                        loadUserData();
                         showMainInterface();
                     } catch (e) {
                         console.error('Ошибка загрузки пользователя:', e);
-                        localStorage.removeItem('skyMessageUser');
+                        localStorage.removeItem('skyMessageCurrentUser');
                         showAuthInterface();
                     }
                 }
+            }
+            
+            function loadUserData() {
+                // Загружаем контакты пользователя
+                userContacts = SkyMessageDB.loadUserContacts(currentUser.username);
                 
-                // Настройка обработчиков событий
-                setupEventListeners();
+                // Если контактов нет, создаем начальные
+                if (userContacts.length === 0) {
+                    createInitialContacts();
+                }
                 
-                // Загружаем доступные устройства
-                loadMediaDevices();
-            }
-            
-            // Загрузка всех пользователей из localStorage
-            function loadAllUsers() {
-                try {
-                    const usersData = localStorage.getItem('skyMessageAllUsers');
-                    if (usersData) {
-                        allUsers = JSON.parse(usersData);
-                        console.log('Загружено пользователей из localStorage:', allUsers.length);
-                    } else {
-                        allUsers = [];
-                        // Создаем несколько демо-пользователей для тестирования
-                        createDemoUsers();
-                        saveAllUsers();
-                    }
-                } catch (e) {
-                    console.error('Ошибка загрузки пользователей:', e);
-                    allUsers = [];
-                }
-            }
-            
-            // Создание демо-пользователей для тестирования
-            function createDemoUsers() {
-                const demoUsers = [
-                    {
-                        id: 'demo1_' + Date.now(),
-                        username: "alex_sky",
-                        name: "Александр",
-                        avatar: "А",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "только что",
-                        online: true
-                    },
-                    {
-                        id: 'demo2_' + Date.now(),
-                        username: "maria_chat",
-                        name: "Мария",
-                        avatar: "М",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "5 минут назад",
-                        online: true
-                    },
-                    {
-                        id: 'demo3_' + Date.now(),
-                        username: "max_talk",
-                        name: "Максим",
-                        avatar: "М",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: "2 часа назад",
-                        online: false
-                    },
-                    {
-                        id: 'demo4_' + Date.now(),
-                        username: "anna_web",
-                        name: "Анна",
-                        avatar: "А",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "в сети",
-                        online: true
-                    },
-                    {
-                        id: 'demo5_' + Date.now(),
-                        username: "dmitry_conn",
-                        name: "Дмитрий",
-                        avatar: "Д",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: "вчера",
-                        online: false
-                    },
-                    {
-                        id: 'demo6_' + Date.now(),
-                        username: "olga_sky",
-                        name: "Ольга",
-                        avatar: "О",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "только что",
-                        online: true
-                    },
-                    {
-                        id: 'demo7_' + Date.now(),
-                        username: "ivan_mess",
-                        name: "Иван",
-                        avatar: "И",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: "30 минут назад",
-                        online: false
-                    },
-                    {
-                        id: 'demo8_' + Date.now(),
-                        username: "sveta_chat",
-                        name: "Светлана",
-                        avatar: "С",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "в сети",
-                        online: true
-                    },
-                    {
-                        id: 'demo9_' + Date.now(),
-                        username: "petr_web",
-                        name: "Пётр",
-                        avatar: "П",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: "сегодня",
-                        online: false
-                    },
-                    {
-                        id: 'demo10_' + Date.now(),
-                        username: "katy_msg",
-                        name: "Екатерина",
-                        avatar: "Е",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: "только что",
-                        online: true
-                    }
-                ];
+                // Загружаем сообщения
+                userMessages = SkyMessageDB.loadUserMessages(currentUser.username);
                 
-                allUsers = demoUsers;
-                console.log('Создано демо-пользователей:', demoUsers.length);
+                console.log('Загружены данные пользователя:', {
+                    username: currentUser.username,
+                    contacts: userContacts.length,
+                    messages: Object.keys(userMessages).length
+                });
             }
             
-            // Сохранение всех пользователей
-            function saveAllUsers() {
-                try {
-                    localStorage.setItem('skyMessageAllUsers', JSON.stringify(allUsers));
-                    console.log('Сохранено пользователей:', allUsers.length);
-                } catch (e) {
-                    console.error('Ошибка сохранения пользователей:', e);
-                }
-            }
-            
-            // Загрузка контактов текущего пользователя
-            function loadContacts() {
-                try {
-                    const contactsData = localStorage.getItem(`skyMessageContacts_${currentUser.username}`);
-                    if (contactsData) {
-                        contacts = JSON.parse(contactsData);
-                        console.log('Загружено контактов:', contacts.length);
-                    } else {
-                        contacts = [];
-                        // Автоматически добавляем первых 3 демо-пользователя в контакты для удобства
-                        if (allUsers.length > 0) {
-                            const demoContacts = allUsers.slice(0, 3).map(user => ({
-                                id: user.id,
-                                username: user.username,
-                                name: user.name,
-                                avatar: user.avatar,
-                                status: user.online ? 'online' : 'offline',
-                                lastSeen: user.lastSeen,
-                                online: user.online
-                            }));
-                            contacts = demoContacts;
-                            saveContacts();
-                            console.log('Автоматически добавлены демо-контакты:', demoContacts.length);
-                        }
+            function createInitialContacts() {
+                // Берем первых 3 демо-пользователя в качестве начальных контактов
+                const initialContacts = SkyMessageDB.users
+                    .filter(user => user.id !== currentUser.id)
+                    .slice(0, 3)
+                    .map(user => ({
+                        id: user.id,
+                        username: user.username,
+                        name: user.name,
+                        avatar: user.avatar,
+                        status: user.online ? 'online' : 'offline',
+                        lastSeen: user.lastSeen,
+                        online: user.online
+                    }));
+                
+                userContacts = initialContacts;
+                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
+                
+                // Создаем начальные сообщения
+                initialContacts.forEach(contact => {
+                    if (!userMessages[contact.id]) {
+                        userMessages[contact.id] = [
+                            {
+                                id: Date.now(),
+                                text: `Привет! Я ${contact.name}. Рад познакомиться!`,
+                                sender: contact.id,
+                                time: getCurrentTime(),
+                                outgoing: false
+                            },
+                            {
+                                id: Date.now() + 1,
+                                text: `Привет, ${contact.name}! Очень приятно!`,
+                                sender: currentUser.id,
+                                time: getCurrentTime(),
+                                outgoing: true
+                            }
+                        ];
                     }
-                } catch (e) {
-                    console.error('Ошибка загрузки контактов:', e);
-                    contacts = [];
-                }
+                });
+                
+                SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
+                
+                console.log('Созданы начальные контакты:', initialContacts.length);
             }
             
-            // Сохранение контактов текущего пользователя
-            function saveContacts() {
-                try {
-                    localStorage.setItem(`skyMessageContacts_${currentUser.username}`, JSON.stringify(contacts));
-                } catch (e) {
-                    console.error('Ошибка сохранения контактов:', e);
-                }
-            }
-            
-            // Загрузка сообщений
-            function loadMessages() {
-                try {
-                    const messagesData = localStorage.getItem(`skyMessageMessages_${currentUser.username}`);
-                    if (messagesData) {
-                        messages = JSON.parse(messagesData);
-                        console.log('Загружено сообщений для чатов:', Object.keys(messages).length);
-                    } else {
-                        messages = {};
-                        // Создаем демо-сообщения для первых контактов
-                        if (contacts.length > 0) {
-                            contacts.forEach((contact, index) => {
-                                const messageList = [
-                                    {
-                                        id: Date.now() + index * 1000,
-                                        text: index === 0 ? "Привет! Как дела?" : "Добрый день!",
-                                        sender: contact.id,
-                                        time: getCurrentTime(),
-                                        outgoing: false
-                                    },
-                                    {
-                                        id: Date.now() + index * 1000 + 1,
-                                        text: index === 0 ? "Привет! Всё отлично, спасибо!" : "Здравствуйте!",
-                                        sender: currentUser.id,
-                                        time: getCurrentTime(),
-                                        outgoing: true
-                                    }
-                                ];
-                                messages[contact.id] = messageList;
-                            });
-                            saveMessages();
-                            console.log('Созданы демо-сообщения для контактов');
-                        }
-                    }
-                } catch (e) {
-                    console.error('Ошибка загрузки сообщений:', e);
-                    messages = {};
-                }
-            }
-            
-            // Сохранение сообщений
-            function saveMessages() {
-                try {
-                    localStorage.setItem(`skyMessageMessages_${currentUser.username}`, JSON.stringify(messages));
-                } catch (e) {
-                    console.error('Ошибка сохранения сообщений:', e);
-                }
-            }
-            
-            // Настройка обработчиков событий
             function setupEventListeners() {
                 // Переключение между формой входа и регистрации
                 toggleLink.addEventListener('click', toggleAuthForm);
@@ -1290,12 +1278,7 @@
                 
                 // Поиск пользователей
                 searchUserInput.addEventListener('input', function() {
-                    if (isSearching) return;
-                    isSearching = true;
-                    setTimeout(() => {
-                        searchUsers();
-                        isSearching = false;
-                    }, 300);
+                    searchUsers(this.value);
                 });
                 
                 // Отправка сообщения
@@ -1307,51 +1290,12 @@
                     }
                 });
                 
-                // Автоматическое изменение высоты поля ввода сообщения
                 messageInput.addEventListener('input', function() {
                     this.style.height = 'auto';
                     this.style.height = (this.scrollHeight) + 'px';
                 });
-                
-                // Кнопки звонков
-                voiceCallButton.addEventListener('click', function() {
-                    startCall('voice');
-                });
-                
-                videoCallButton.addEventListener('click', function() {
-                    startCall('video');
-                });
-                
-                // Кнопки управления звонком
-                acceptCallButton.addEventListener('click', acceptCall);
-                declineCallButton.addEventListener('click', declineCall);
-                endCallButton.addEventListener('click', endCall);
-                toggleVideoButton.addEventListener('click', toggleVideo);
-                toggleAudioButton.addEventListener('click', toggleAudio);
-                
-                // Выбор устройств
-                cameraSelect.addEventListener('change', changeCamera);
-                microphoneSelect.addEventListener('change', changeMicrophone);
-                
-                // Закрытие уведомления
-                notification.addEventListener('click', function(e) {
-                    if (!e.target.closest('.notification-actions')) {
-                        hideNotification();
-                    }
-                });
-                
-                // Отладка: кнопка для очистки данных
-                document.addEventListener('keydown', function(e) {
-                    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                        if (confirm('Очистить все данные приложения?')) {
-                            localStorage.clear();
-                            location.reload();
-                        }
-                    }
-                });
             }
             
-            // Переключение между формой входа и регистрации
             function toggleAuthForm() {
                 const isLoginVisible = !loginForm.classList.contains('hidden');
                 
@@ -1359,18 +1303,18 @@
                     // Переключаемся на регистрацию
                     loginForm.classList.add('hidden');
                     registerForm.classList.remove('hidden');
-                    formTitle.textContent = 'Создайте аккаунт';
-                    formSubtitle.textContent = 'Зарегистрируйтесь, чтобы начать пользоваться мессенджером';
-                    toggleText.textContent = 'Уже есть аккаунт?';
+                    document.getElementById('formTitle').textContent = 'Создайте аккаунт';
+                    document.getElementById('formSubtitle').textContent = 'Зарегистрируйтесь, чтобы начать пользоваться мессенджером';
+                    document.getElementById('toggleText').textContent = 'Уже есть аккаунт?';
                     toggleLink.textContent = 'Войти';
                 } else {
                     // Переключаемся на вход
                     registerForm.classList.remove('hidden');
                     loginForm.classList.remove('hidden');
                     registerForm.classList.add('hidden');
-                    formTitle.textContent = 'Войдите в аккаунт';
-                    formSubtitle.textContent = 'Введите свои данные для входа в мессенджер';
-                    toggleText.textContent = 'Нет аккаунта?';
+                    document.getElementById('formTitle').textContent = 'Войдите в аккаунт';
+                    document.getElementById('formSubtitle').textContent = 'Введите свои данные для входа в мессенджер';
+                    document.getElementById('toggleText').textContent = 'Нет аккаунта?';
                     toggleLink.textContent = 'Зарегистрироваться';
                 }
                 
@@ -1380,15 +1324,14 @@
                 });
             }
             
-            // Вход пользователя
             async function loginUser() {
                 const username = document.getElementById('loginUsername').value.trim();
                 const password = document.getElementById('loginPassword').value.trim();
                 const loginButton = document.getElementById('loginButton');
                 
                 // Сбрасываем ошибки
-                document.getElementById('loginUsernameError').style.display = 'none';
-                document.getElementById('loginPasswordError').style.display = 'none';
+                hideError('loginUsernameError');
+                hideError('loginPasswordError');
                 
                 // Проверка введенных данных
                 if (!username || !password) {
@@ -1402,21 +1345,21 @@
                 loginButton.disabled = true;
                 
                 // Имитация задержки сети
-                await delay(500);
+                await delay(300);
                 
-                // Проверяем, существует ли пользователь
-                const user = allUsers.find(u => u.username === username);
+                // Ищем пользователя
+                const user = SkyMessageDB.findUserByUsername(username);
                 
                 if (!user) {
                     showError('loginUsernameError', 'Пользователь не найден');
-                    resetLoginButton(loginButton, originalText);
+                    resetButton(loginButton, originalText);
                     return;
                 }
                 
                 // Проверяем пароль
                 if (user.password !== password) {
                     showError('loginPasswordError', 'Неверный пароль');
-                    resetLoginButton(loginButton, originalText);
+                    resetButton(loginButton, originalText);
                     return;
                 }
                 
@@ -1430,15 +1373,13 @@
                     online: true
                 };
                 
-                // Обновляем статус пользователя
-                updateUserStatus(user.id, true);
+                SkyMessageDB.currentUser = currentUser;
                 
-                // Сохраняем пользователя в localStorage
-                localStorage.setItem('skyMessageUser', JSON.stringify(currentUser));
+                // Сохраняем текущего пользователя
+                localStorage.setItem('skyMessageCurrentUser', JSON.stringify(currentUser));
                 
-                // Загружаем контакты и сообщения
-                loadContacts();
-                loadMessages();
+                // Загружаем данные пользователя
+                loadUserData();
                 
                 // Показываем основной интерфейс
                 showMainInterface();
@@ -1446,26 +1387,9 @@
                 // Показываем уведомление
                 showNotification('message', 'Добро пожаловать в SkyMessage!', 'Вы успешно вошли в систему.');
                 
-                resetLoginButton(loginButton, originalText);
+                resetButton(loginButton, originalText);
             }
             
-            // Обновление статуса пользователя
-            function updateUserStatus(userId, isOnline) {
-                const userIndex = allUsers.findIndex(u => u.id === userId);
-                if (userIndex !== -1) {
-                    allUsers[userIndex].online = isOnline;
-                    allUsers[userIndex].status = isOnline ? 'online' : 'offline';
-                    allUsers[userIndex].lastSeen = isOnline ? 'только что' : allUsers[userIndex].lastSeen;
-                    saveAllUsers();
-                }
-            }
-            
-            function resetLoginButton(button, originalText) {
-                button.innerHTML = originalText;
-                button.disabled = false;
-            }
-            
-            // Регистрация пользователя
             async function registerUser() {
                 const username = document.getElementById('registerUsername').value.trim();
                 const password = document.getElementById('registerPassword').value.trim();
@@ -1473,9 +1397,9 @@
                 const registerButton = document.getElementById('registerButton');
                 
                 // Сбрасываем ошибки
-                document.getElementById('registerUsernameError').style.display = 'none';
-                document.getElementById('registerPasswordError').style.display = 'none';
-                document.getElementById('registerConfirmPasswordError').style.display = 'none';
+                hideError('registerUsernameError');
+                hideError('registerPasswordError');
+                hideError('registerConfirmPasswordError');
                 
                 // Проверка введенных данных
                 if (!username || !password || !confirmPassword) {
@@ -1490,7 +1414,7 @@
                 }
                 
                 // Проверка, занят ли никнейм
-                const usernameTaken = allUsers.some(user => user.username === username);
+                const usernameTaken = SkyMessageDB.users.some(user => user.username === username);
                 if (usernameTaken) {
                     showError('registerUsernameError', 'Этот никнейм уже занят');
                     return;
@@ -1514,7 +1438,7 @@
                 registerButton.disabled = true;
                 
                 // Имитация задержки сети
-                await delay(500);
+                await delay(300);
                 
                 // Создаем нового пользователя
                 const newUser = {
@@ -1525,12 +1449,12 @@
                     password: password,
                     status: 'online',
                     lastSeen: 'только что',
-                    online: true
+                    online: true,
+                    registered: Date.now()
                 };
                 
-                // Добавляем пользователя в общий список
-                allUsers.push(newUser);
-                saveAllUsers();
+                // Добавляем пользователя в систему
+                SkyMessageDB.addUser(newUser);
                 
                 // Устанавливаем текущего пользователя
                 currentUser = {
@@ -1542,82 +1466,38 @@
                     online: true
                 };
                 
-                // Сохраняем пользователя в localStorage
-                localStorage.setItem('skyMessageUser', JSON.stringify(currentUser));
+                SkyMessageDB.currentUser = currentUser;
                 
-                // Инициализируем контакты и сообщения
-                contacts = [];
-                messages = {};
+                // Сохраняем текущего пользователя
+                localStorage.setItem('skyMessageCurrentUser', JSON.stringify(currentUser));
                 
-                // Автоматически добавляем демо-пользователей в контакты
-                const demoContacts = allUsers
-                    .filter(user => user.id !== currentUser.id)
-                    .slice(0, 5)
-                    .map(user => ({
-                        id: user.id,
-                        username: user.username,
-                        name: user.name,
-                        avatar: user.avatar,
-                        status: user.online ? 'online' : 'offline',
-                        lastSeen: user.lastSeen,
-                        online: user.online
-                    }));
+                // Инициализируем данные пользователя
+                userContacts = [];
+                userMessages = {};
                 
-                contacts = demoContacts;
-                saveContacts();
-                
-                // Создаем демо-сообщения для контактов
-                contacts.forEach((contact, index) => {
-                    const messageList = [
-                        {
-                            id: Date.now() + index * 1000,
-                            text: index === 0 ? "Привет! Добро пожаловать в SkyMessage!" : "Рад видеть вас в нашем мессенджере!",
-                            sender: contact.id,
-                            time: getCurrentTime(),
-                            outgoing: false
-                        },
-                        {
-                            id: Date.now() + index * 1000 + 1,
-                            text: index === 0 ? "Спасибо! Рад присоединиться!" : "Спасибо! Очень крутой мессенджер!",
-                            sender: currentUser.id,
-                            time: getCurrentTime(),
-                            outgoing: true
-                        }
-                    ];
-                    messages[contact.id] = messageList;
-                });
-                saveMessages();
+                // Создаем начальные контакты
+                createInitialContacts();
                 
                 // Показываем основной интерфейс
                 showMainInterface();
                 
                 // Показываем уведомление
-                showNotification('message', 'Регистрация успешна!', `Добро пожаловать в SkyMessage, ${currentUser.name}! Вам автоматически добавлены контакты для тестирования.`);
+                showNotification('message', 'Регистрация успешна!', `Добро пожаловать в SkyMessage, ${currentUser.name}!`);
                 
-                resetLoginButton(registerButton, originalText);
+                resetButton(registerButton, originalText);
             }
             
-            // Выход пользователя
             function logoutUser() {
-                // Завершаем звонок, если он активен
-                if (callInProgress) {
-                    endCall();
-                }
-                
-                // Обновляем статус пользователя
-                if (currentUser) {
-                    updateUserStatus(currentUser.id, false);
-                }
-                
                 // Останавливаем интервал обновления
                 if (refreshInterval) {
                     clearInterval(refreshInterval);
                     refreshInterval = null;
                 }
                 
-                // Очищаем данные
+                // Очищаем текущего пользователя
                 currentUser = null;
-                localStorage.removeItem('skyMessageUser');
+                SkyMessageDB.currentUser = null;
+                localStorage.removeItem('skyMessageCurrentUser');
                 
                 // Показываем интерфейс авторизации
                 showAuthInterface();
@@ -1632,21 +1512,17 @@
                 }
             }
             
-            // Показать интерфейс авторизации
             function showAuthInterface() {
                 authContainer.style.display = 'flex';
                 mainContainer.style.display = 'none';
-                callContainer.style.display = 'none';
-                searchError.style.display = 'none';
+                document.getElementById('searchError').style.display = 'none';
                 
-                // Останавливаем интервал обновления
                 if (refreshInterval) {
                     clearInterval(refreshInterval);
                     refreshInterval = null;
                 }
             }
             
-            // Показать основной интерфейс
             function showMainInterface() {
                 authContainer.style.display = 'none';
                 mainContainer.style.display = 'flex';
@@ -1664,63 +1540,61 @@
                 
                 // Сбрасываем поиск
                 searchUserInput.value = '';
-                searchError.style.display = 'none';
+                document.getElementById('searchError').style.display = 'none';
                 
                 console.log('Пользователь вошел:', currentUser.username);
-                console.log('Всего пользователей в системе:', allUsers.length);
-                console.log('Контактов пользователя:', contacts.length);
+                console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
+                console.log('Контактов пользователя:', userContacts.length);
                 
-                // Запускаем автообновление списка пользователей
+                // Запускаем автообновление
                 startAutoRefresh();
             }
             
-            // Запуск автообновления списка пользователей
             function startAutoRefresh() {
                 if (refreshInterval) {
                     clearInterval(refreshInterval);
                 }
                 
-                // Обновляем список пользователей каждую секунду
                 refreshInterval = setInterval(() => {
-                    // Обновляем статусы пользователей случайным образом
-                    updateRandomUserStatuses();
+                    updateRandomStatuses();
                     
-                    // Если идет поиск, обновляем результаты
                     if (searchUserInput.value.trim() !== '') {
-                        searchUsers();
+                        searchUsers(searchUserInput.value);
                     } else {
                         renderContacts();
                     }
-                }, 1000);
+                }, 2000);
             }
             
-            // Обновление статусов пользователей случайным образом
-            function updateRandomUserStatuses() {
-                allUsers.forEach(user => {
-                    if (user.id !== currentUser.id) {
-                        // 10% вероятность смены статуса
-                        if (Math.random() < 0.1) {
+            function updateRandomStatuses() {
+                // Обновляем статусы демо-пользователей
+                SkyMessageDB.users.forEach(user => {
+                    if (user.id.startsWith('demo')) {
+                        // 15% вероятность смены статуса
+                        if (Math.random() < 0.15) {
                             user.online = !user.online;
                             user.status = user.online ? 'online' : 'offline';
                             user.lastSeen = user.online ? 'только что' : getRandomLastSeen();
                         }
                     }
                 });
-                saveAllUsers();
+                
+                // Сохраняем изменения
+                SkyMessageDB.saveAllUsers();
                 
                 // Обновляем статусы в контактах
-                contacts.forEach(contact => {
-                    const user = allUsers.find(u => u.id === contact.id);
+                userContacts.forEach(contact => {
+                    const user = SkyMessageDB.users.find(u => u.id === contact.id);
                     if (user) {
                         contact.status = user.status;
                         contact.lastSeen = user.lastSeen;
                         contact.online = user.online;
                     }
                 });
-                saveContacts();
+                
+                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
             }
             
-            // Получение случайного времени последнего посещения
             function getRandomLastSeen() {
                 const times = [
                     'только что',
@@ -1736,84 +1610,24 @@
                 return times[Math.floor(Math.random() * times.length)];
             }
             
-            // Поиск пользователей
-            function searchUsers() {
-                const query = searchUserInput.value.trim().toLowerCase();
+            function searchUsers(query) {
+                const searchError = document.getElementById('searchError');
                 searchError.style.display = 'none';
                 
-                if (query === '') {
-                    // Если поисковой запрос пустой, показываем все контакты
+                if (!query || query.trim() === '') {
                     renderContacts();
                     return;
                 }
                 
                 console.log('Поиск пользователей по запросу:', query);
+                console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
                 
-                // Фильтруем пользователей по запросу, исключая текущего пользователя
-                const filteredUsers = allUsers.filter(user => {
-                    // Пропускаем текущего пользователя
-                    if (user.id === currentUser.id) return false;
-                    
-                    // Проверяем совпадение по имени пользователя или имени
-                    const matches = user.username.toLowerCase().includes(query) || 
-                                   user.name.toLowerCase().includes(query);
-                    
-                    return matches;
-                });
+                // Ищем пользователей
+                const searchResults = SkyMessageDB.searchUsers(query, currentUser?.id);
                 
-                console.log('Найдено пользователей:', filteredUsers.length);
+                console.log('Найдено пользователей:', searchResults.length);
                 
-                // Отображаем результаты поиска
-                renderSearchResults(filteredUsers);
-            }
-            
-            // Отображение контактов
-            function renderContacts() {
-                contactsContainer.innerHTML = '';
-                
-                if (contacts.length === 0) {
-                    contactsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 30px; color: var(--gray-color);">
-                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                            <p>Контакты не найдены</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">Используйте поиск, чтобы найти других пользователей</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                contacts.forEach(contact => {
-                    const contactElement = document.createElement('div');
-                    contactElement.className = 'contact';
-                    contactElement.dataset.userId = contact.id;
-                    
-                    // Определяем статус
-                    const statusClass = contact.online ? 'online' : '';
-                    const lastSeenText = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
-                    
-                    contactElement.innerHTML = `
-                        <div class="contact-avatar">${contact.avatar}</div>
-                        <div class="contact-info">
-                            <h4>${contact.name} <span style="color: var(--gray-color); font-weight: normal; font-size: 0.8rem;">@${contact.username}</span></h4>
-                            <p>${lastSeenText}</p>
-                        </div>
-                        <div class="contact-status ${statusClass}"></div>
-                    `;
-                    
-                    // Обработчик клика по контакту
-                    contactElement.addEventListener('click', function() {
-                        selectContact(contact);
-                    });
-                    
-                    contactsContainer.appendChild(contactElement);
-                });
-            }
-            
-            // Отображение результатов поиска
-            function renderSearchResults(results) {
-                contactsContainer.innerHTML = '';
-                
-                if (results.length === 0) {
+                if (searchResults.length === 0) {
                     contactsContainer.innerHTML = `
                         <div style="text-align: center; padding: 30px; color: var(--gray-color);">
                             <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
@@ -1824,100 +1638,87 @@
                     return;
                 }
                 
-                results.forEach(user => {
-                    // Проверяем, есть ли пользователь уже в контактах
-                    const isContact = contacts.some(contact => contact.id === user.id);
-                    
-                    const userElement = document.createElement('div');
-                    userElement.className = 'contact search-result';
-                    userElement.dataset.userId = user.id;
-                    
-                    // Определяем статус
-                    const statusClass = user.online ? 'online' : '';
-                    const lastSeenText = user.online ? 'в сети' : `был(а) ${user.lastSeen}`;
-                    
-                    userElement.innerHTML = `
-                        <div class="contact-avatar">${user.avatar}</div>
-                        <div class="contact-info">
-                            <h4>${user.name} <span style="color: var(--gray-color); font-weight: normal;">@${user.username}</span></h4>
-                            <p>${lastSeenText}</p>
-                        </div>
-                        <div class="contact-status ${statusClass}"></div>
-                    `;
-                    
-                    if (!isContact) {
-                        const addButton = document.createElement('button');
-                        addButton.className = 'btn btn-primary btn-small add-contact-btn';
-                        addButton.innerHTML = '<i class="fas fa-user-plus"></i>';
-                        addButton.style.marginLeft = '10px';
-                        addButton.title = 'Добавить в контакты';
-                        userElement.appendChild(addButton);
-                        
-                        // Обработчик кнопки добавления
-                        addButton.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            addToContacts(user);
-                        });
-                    }
-                    
-                    // Обработчик клика по пользователю
-                    userElement.addEventListener('click', function(e) {
-                        if (!e.target.closest('.add-contact-btn')) {
-                            if (isContact) {
-                                // Если пользователь уже в контактах, открываем чат
-                                const contact = contacts.find(c => c.id === user.id);
-                                if (contact) selectContact(contact);
-                            } else {
-                                // Иначе добавляем в контакты
-                                addToContacts(user);
-                            }
-                        }
-                    });
-                    
-                    contactsContainer.appendChild(userElement);
-                });
+                renderSearchResults(searchResults);
             }
             
-            // Выбор контакта для чата
-            function selectContact(contact) {
-                // Снимаем выделение со всех контактов
-                document.querySelectorAll('.contact').forEach(el => {
-                    el.classList.remove('active');
-                });
+            function renderContacts() {
+                contactsContainer.innerHTML = '';
                 
-                // Выделяем выбранный контакт
-                const contactElement = document.querySelector(`.contact[data-user-id="${contact.id}"]`);
-                if (contactElement) {
-                    contactElement.classList.add('active');
+                if (userContacts.length === 0) {
+                    contactsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: var(--gray-color);">
+                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <p>Контакты не найдены</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Используйте поиск, чтобы найти других пользователей</p>
+                        </div>
+                    `;
+                    return;
                 }
                 
-                // Устанавливаем текущий контакт
-                currentContact = contact;
-                
-                // Обновляем заголовок чата
-                document.getElementById('chatUserName').textContent = contact.name;
-                document.getElementById('chatUserAvatar').textContent = contact.avatar;
-                document.getElementById('chatUserStatus').textContent = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
-                
-                // Включаем поле ввода и кнопки
-                messageInput.disabled = false;
-                sendMessageButton.disabled = false;
-                voiceCallButton.disabled = false;
-                videoCallButton.disabled = false;
-                
-                // Отображаем сообщения
-                renderMessages(contact.id);
-                
-                // Сбрасываем поиск
-                searchUserInput.value = '';
-                searchError.style.display = 'none';
-                renderContacts();
+                userContacts.forEach(contact => {
+                    const contactElement = createContactElement(contact, true);
+                    contactsContainer.appendChild(contactElement);
+                });
             }
             
-            // Добавление пользователя в контакты
+            function renderSearchResults(results) {
+                contactsContainer.innerHTML = '';
+                
+                results.forEach(user => {
+                    const isContact = userContacts.some(contact => contact.id === user.id);
+                    const contactElement = createContactElement(user, isContact);
+                    contactsContainer.appendChild(contactElement);
+                });
+            }
+            
+            function createContactElement(user, isContact) {
+                const contactElement = document.createElement('div');
+                contactElement.className = 'contact';
+                contactElement.dataset.userId = user.id;
+                
+                const statusClass = user.online ? 'online' : '';
+                const lastSeenText = user.online ? 'в сети' : `был(а) ${user.lastSeen}`;
+                
+                contactElement.innerHTML = `
+                    <div class="contact-avatar">${user.avatar}</div>
+                    <div class="contact-info">
+                        <h4>${user.name} <span style="color: var(--gray-color); font-weight: normal; font-size: 0.8rem;">@${user.username}</span></h4>
+                        <p>${lastSeenText}</p>
+                    </div>
+                    <div class="contact-status ${statusClass}"></div>
+                `;
+                
+                if (!isContact) {
+                    const addButton = document.createElement('button');
+                    addButton.className = 'btn btn-primary btn-small add-contact-btn';
+                    addButton.innerHTML = '<i class="fas fa-user-plus"></i>';
+                    addButton.style.marginLeft = '10px';
+                    addButton.title = 'Добавить в контакты';
+                    contactElement.appendChild(addButton);
+                    
+                    addButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        addToContacts(user);
+                    });
+                }
+                
+                contactElement.addEventListener('click', function(e) {
+                    if (!e.target.closest('.add-contact-btn')) {
+                        if (isContact) {
+                            const contact = userContacts.find(c => c.id === user.id);
+                            if (contact) selectContact(contact);
+                        } else {
+                            addToContacts(user);
+                        }
+                    }
+                });
+                
+                return contactElement;
+            }
+            
             function addToContacts(user) {
                 // Проверяем, не добавлен ли уже пользователь
-                if (contacts.some(contact => contact.id === user.id)) {
+                if (userContacts.some(contact => contact.id === user.id)) {
                     showNotification('message', 'Контакт уже добавлен', `${user.name} уже есть в ваших контактах`);
                     return;
                 }
@@ -1933,12 +1734,12 @@
                     online: user.online
                 };
                 
-                contacts.push(contactToAdd);
-                saveContacts();
+                userContacts.push(contactToAdd);
+                SkyMessageDB.saveUserContacts(currentUser.username, userContacts);
                 
-                // Создаем начальные сообщения для нового контакта
-                if (!messages[user.id]) {
-                    messages[user.id] = [
+                // Создаем начальные сообщения
+                if (!userMessages[user.id]) {
+                    userMessages[user.id] = [
                         {
                             id: Date.now(),
                             text: `Привет! Я ${user.name}. Рад познакомиться!`,
@@ -1948,16 +1749,16 @@
                         },
                         {
                             id: Date.now() + 1,
-                            text: `Привет, ${user.name}! Рад познакомиться!`,
+                            text: `Привет, ${user.name}! Очень приятно!`,
                             sender: currentUser.id,
                             time: getCurrentTime(),
                             outgoing: true
                         }
                     ];
-                    saveMessages();
+                    SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
                 }
                 
-                // Обновляем отображение контактов
+                // Обновляем отображение
                 renderContacts();
                 
                 // Показываем уведомление
@@ -1970,20 +1771,47 @@
                 searchUserInput.value = '';
             }
             
-            // Сброс чата
+            function selectContact(contact) {
+                document.querySelectorAll('.contact').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                const contactElement = document.querySelector(`.contact[data-user-id="${contact.id}"]`);
+                if (contactElement) {
+                    contactElement.classList.add('active');
+                }
+                
+                currentContact = contact;
+                
+                document.getElementById('chatUserName').textContent = contact.name;
+                document.getElementById('chatUserAvatar').textContent = contact.avatar;
+                document.getElementById('chatUserStatus').textContent = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
+                
+                messageInput.disabled = false;
+                sendMessageButton.disabled = false;
+                document.getElementById('voiceCallButton').disabled = false;
+                document.getElementById('videoCallButton').disabled = false;
+                
+                renderMessages(contact.id);
+                
+                searchUserInput.value = '';
+                document.getElementById('searchError').style.display = 'none';
+                
+                if (searchUserInput.value.trim() === '') {
+                    renderContacts();
+                }
+            }
+            
             function resetChat() {
-                // Сбрасываем заголовок чата
                 document.getElementById('chatUserName').textContent = 'Выберите чат';
                 document.getElementById('chatUserAvatar').textContent = 'U';
                 document.getElementById('chatUserStatus').textContent = 'начните общение';
                 
-                // Отключаем поле ввода и кнопки
                 messageInput.disabled = true;
                 sendMessageButton.disabled = true;
-                voiceCallButton.disabled = true;
-                videoCallButton.disabled = true;
+                document.getElementById('voiceCallButton').disabled = true;
+                document.getElementById('videoCallButton').disabled = true;
                 
-                // Очищаем сообщения
                 messagesContainer.innerHTML = `
                     <div style="text-align: center; margin-top: 50px; color: var(--gray-color);">
                         <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
@@ -1991,7 +1819,6 @@
                     </div>
                 `;
                 
-                // Снимаем выделение с контактов
                 document.querySelectorAll('.contact').forEach(el => {
                     el.classList.remove('active');
                 });
@@ -1999,9 +1826,8 @@
                 currentContact = null;
             }
             
-            // Отображение сообщений
             function renderMessages(contactId) {
-                const messageList = messages[contactId] || [];
+                const messageList = userMessages[contactId] || [];
                 
                 messagesContainer.innerHTML = '';
                 
@@ -2027,17 +1853,14 @@
                     messagesContainer.appendChild(messageElement);
                 });
                 
-                // Прокручиваем вниз к последним сообщениям
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
             
-            // Отправка сообщения
             function sendMessage() {
                 const text = messageInput.value.trim();
                 
                 if (!text || !currentContact) return;
                 
-                // Создаем новое сообщение
                 const newMessage = {
                     id: Date.now(),
                     text: text,
@@ -2046,28 +1869,20 @@
                     outgoing: true
                 };
                 
-                // Добавляем сообщение в список
-                if (!messages[currentContact.id]) {
-                    messages[currentContact.id] = [];
+                if (!userMessages[currentContact.id]) {
+                    userMessages[currentContact.id] = [];
                 }
                 
-                messages[currentContact.id].push(newMessage);
-                saveMessages();
+                userMessages[currentContact.id].push(newMessage);
+                SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
                 
-                // Отображаем сообщение
                 renderMessages(currentContact.id);
                 
-                // Очищаем поле ввода
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 
-                // Обновляем контакт в списке контактов
-                updateContactLastMessage(currentContact.id, text);
-                
-                // Имитируем ответ через 1-3 секунды
                 setTimeout(() => {
                     if (currentContact && currentContact.id === currentContact.id) {
-                        // Создаем ответное сообщение
                         const replyMessage = {
                             id: Date.now() + 1,
                             text: getRandomReply(),
@@ -2076,484 +1891,24 @@
                             outgoing: false
                         };
                         
-                        // Добавляем ответное сообщение
-                        messages[currentContact.id].push(replyMessage);
-                        saveMessages();
+                        userMessages[currentContact.id].push(replyMessage);
+                        SkyMessageDB.saveUserMessages(currentUser.username, userMessages);
                         
-                        // Обновляем отображение
                         renderMessages(currentContact.id);
                         
-                        // Показываем уведомление о новом сообщении
-                        if (document.hidden || !isChatActive()) {
+                        if (document.hidden) {
                             showNotification('message', 'Новое сообщение', `${currentContact.name}: ${replyMessage.text.substring(0, 50)}...`);
                         }
                     }
                 }, 1000 + Math.random() * 2000);
             }
             
-            // Обновление последнего сообщения в контакте
-            function updateContactLastMessage(contactId, lastMessage) {
-                const contact = contacts.find(c => c.id === contactId);
-                if (contact) {
-                    contact.lastMessage = lastMessage;
-                    contact.lastMessageTime = getCurrentTime();
-                    saveContacts();
-                }
-            }
-            
-            // Проверка, активен ли чат
-            function isChatActive() {
-                return currentContact && messagesContainer.style.display !== 'none';
-            }
-            
-            // Начать звонок
-            function startCall(type) {
-                if (!currentContact || callInProgress) return;
-                
-                currentCallType = type;
-                isCaller = true;
-                callInProgress = true;
-                
-                // Настраиваем интерфейс звонка
-                callTitle.textContent = type === 'video' ? 'Исходящий видеозвонок' : 'Исходящий аудиозвонок';
-                callDescription.textContent = `Звонок пользователю ${currentContact.name}`;
-                remoteUserName.textContent = currentContact.name;
-                
-                // Показываем кнопку завершения звонка
-                acceptCallButton.classList.add('hidden');
-                declineCallButton.classList.add('hidden');
-                endCallButton.classList.remove('hidden');
-                
-                // Сбрасываем состояния кнопок
-                toggleVideoButton.classList.remove('active');
-                toggleAudioButton.classList.remove('active');
-                isVideoEnabled = true;
-                isAudioEnabled = true;
-                
-                // Показываем окно звонка
-                callContainer.style.display = 'flex';
-                
-                // Инициализируем медиа
-                initializeMedia(type);
-                
-                // Имитируем входящий звонок для получателя через 1.5 секунды
-                callTimeout = setTimeout(() => {
-                    if (callInProgress) {
-                        // Показываем уведомление о звонке
-                        showNotification('incoming-call', 
-                            type === 'video' ? 'Входящий видеозвонок' : 'Входящий аудиозвонок', 
-                            `${currentContact.name} звонит вам`, 
-                            [
-                                { text: 'Принять', action: 'simulateAcceptCall', type: 'success' },
-                                { text: 'Отклонить', action: 'simulateDeclineCall', type: 'danger' }
-                            ]
-                        );
-                    }
-                }, 1500);
-            }
-            
-            // Принять звонок (симуляция для получателя)
-            function simulateAcceptCall() {
-                // Скрываем уведомление
-                hideNotification();
-                
-                // Если мы не в звонке, принимаем
-                if (!callInProgress) {
-                    currentCallType = 'video';
-                    isCaller = false;
-                    callInProgress = true;
-                    
-                    // Обновляем интерфейс звонка
-                    callTitle.textContent = currentCallType === 'video' ? 'Видеозвонок' : 'Аудиозвонок';
-                    callDescription.textContent = `Звонок с ${currentContact.name}`;
-                    remoteUserName.textContent = currentContact.name;
-                    
-                    // Показываем кнопку завершения звонка
-                    acceptCallButton.classList.add('hidden');
-                    declineCallButton.classList.add('hidden');
-                    endCallButton.classList.remove('hidden');
-                    
-                    // Сбрасываем состояния кнопок
-                    toggleVideoButton.classList.remove('active');
-                    toggleAudioButton.classList.remove('active');
-                    isVideoEnabled = true;
-                    isAudioEnabled = true;
-                    
-                    // Инициализируем медиа
-                    initializeMedia(currentCallType);
-                }
-            }
-            
-            // Отклонить звонок (симуляция для получателя)
-            function simulateDeclineCall() {
-                // Скрываем уведомление
-                hideNotification();
-                
-                // Показываем уведомление
-                showNotification('message', 'Звонок отклонен', 'Вы отклонили входящий звонок');
-                
-                // Если мы инициатор, завершаем звонок
-                if (isCaller && callInProgress) {
-                    endCall();
-                }
-            }
-            
-            // Принять звонок (для текущего пользователя)
-            function acceptCall() {
-                // Скрываем уведомление, если оно есть
-                hideNotification();
-                
-                // Обновляем интерфейс звонка
-                callTitle.textContent = currentCallType === 'video' ? 'Видеозвонок' : 'Аудиозвонок';
-                callDescription.textContent = `Звонок с ${currentContact.name}`;
-                
-                // Показываем кнопку завершения звонка
-                acceptCallButton.classList.add('hidden');
-                declineCallButton.classList.add('hidden');
-                endCallButton.classList.remove('hidden');
-                
-                // Инициализируем медиа
-                initializeMedia(currentCallType);
-            }
-            
-            // Отклонить звонок
-            function declineCall() {
-                // Скрываем уведомление
-                hideNotification();
-                
-                // Завершаем звонок
-                endCall();
-                
-                // Показываем уведомление
-                showNotification('message', 'Звонок отклонен', 'Вы отклонили входящий звонок');
-            }
-            
-            // Завершить звонок
-            function endCall() {
-                // Останавливаем все медиапотоки
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                
-                // Очищаем таймаут
-                if (callTimeout) {
-                    clearTimeout(callTimeout);
-                    callTimeout = null;
-                }
-                
-                // Сбрасываем переменные
-                peerConnection = null;
-                localStream = null;
-                remoteStream = null;
-                callInProgress = false;
-                isCaller = false;
-                
-                // Скрываем окно звонка
-                callContainer.style.display = 'none';
-                
-                // Очищаем видеоэлементы
-                localVideo.srcObject = null;
-                remoteVideo.srcObject = null;
-                
-                // Показываем уведомление
-                showNotification('message', 'Звонок завершен', 'Соединение разорвано');
-            }
-            
-            // Включить/выключить видео
-            function toggleVideo() {
-                if (!localStream) return;
-                
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    isVideoEnabled = !videoTrack.enabled;
-                    videoTrack.enabled = isVideoEnabled;
-                    
-                    // Обновляем иконку кнопки
-                    const icon = toggleVideoButton.querySelector('i');
-                    icon.className = isVideoEnabled ? 'fas fa-video' : 'fas fa-video-slash';
-                    
-                    // Обновляем состояние кнопки
-                    if (isVideoEnabled) {
-                        toggleVideoButton.classList.remove('active');
-                    } else {
-                        toggleVideoButton.classList.add('active');
-                    }
-                }
-            }
-            
-            // Включить/выключить микрофон
-            function toggleAudio() {
-                if (!localStream) return;
-                
-                const audioTrack = localStream.getAudioTracks()[0];
-                if (audioTrack) {
-                    isAudioEnabled = !audioTrack.enabled;
-                    audioTrack.enabled = isAudioEnabled;
-                    
-                    // Обновляем иконку кнопки
-                    const icon = toggleAudioButton.querySelector('i');
-                    icon.className = isAudioEnabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
-                    
-                    // Обновляем состояние кнопки
-                    if (isAudioEnabled) {
-                        toggleAudioButton.classList.remove('active');
-                    } else {
-                        toggleAudioButton.classList.add('active');
-                    }
-                }
-            }
-            
-            // Инициализация медиа
-            async function initializeMedia(type) {
-                try {
-                    // Получаем медиапоток
-                    const constraints = {
-                        audio: true,
-                        video: type === 'video' ? {
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        } : false
-                    };
-                    
-                    localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    
-                    // Отображаем локальное видео
-                    localVideo.srcObject = localStream;
-                    
-                    // Имитируем удаленный поток (в реальном приложении это был бы WebRTC)
-                    setTimeout(() => {
-                        // В реальном приложении здесь было бы установление WebRTC соединения
-                        // Для демонстрации имитируем удаленный поток
-                        simulateRemoteStream();
-                    }, 1000);
-                    
-                } catch (error) {
-                    console.error('Ошибка доступа к медиаустройствам:', error);
-                    showNotification('message', 'Ошибка доступа', 'Не удалось получить доступ к камере или микрофону');
-                    endCall();
-                }
-            }
-            
-            // Имитация удаленного видеопотока
-            function simulateRemoteStream() {
-                // Создаем тестовый поток с помощью Canvas
-                const canvas = document.createElement('canvas');
-                canvas.width = 640;
-                canvas.height = 480;
-                const ctx = canvas.getContext('2d');
-                
-                let animationId;
-                
-                function drawFrame() {
-                    if (!callInProgress) {
-                        cancelAnimationFrame(animationId);
-                        return;
-                    }
-                    
-                    // Очищаем canvas
-                    ctx.fillStyle = '#333';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Рисуем текст
-                    ctx.fillStyle = '#fff';
-                    ctx.font = '30px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(currentContact.name, canvas.width / 2, canvas.height / 2);
-                    
-                    // Рисуем анимированный круг
-                    const time = Date.now() / 1000;
-                    const radius = 40 + 10 * Math.sin(time * 2);
-                    
-                    ctx.beginPath();
-                    ctx.arc(canvas.width / 2, canvas.height / 2 + 50, radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#4361ee';
-                    ctx.lineWidth = 5;
-                    ctx.stroke();
-                    
-                    // Создаем поток из canvas
-                    const stream = canvas.captureStream(25);
-                    remoteVideo.srcObject = stream;
-                    
-                    animationId = requestAnimationFrame(drawFrame);
-                }
-                
-                drawFrame();
-            }
-            
-            // Загрузка доступных медиаустройств
-            async function loadMediaDevices() {
-                try {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    
-                    cameras = devices.filter(device => device.kind === 'videoinput');
-                    microphones = devices.filter(device => device.kind === 'audioinput');
-                    
-                    // Очищаем выпадающие списки
-                    cameraSelect.innerHTML = '';
-                    microphoneSelect.innerHTML = '';
-                    
-                    // Добавляем опцию по умолчанию
-                    const defaultCameraOption = document.createElement('option');
-                    defaultCameraOption.value = 'default';
-                    defaultCameraOption.text = 'Камера по умолчанию';
-                    cameraSelect.appendChild(defaultCameraOption);
-                    
-                    const defaultMicrophoneOption = document.createElement('option');
-                    defaultMicrophoneOption.value = 'default';
-                    defaultMicrophoneOption.text = 'Микрофон по умолчанию';
-                    microphoneSelect.appendChild(defaultMicrophoneOption);
-                    
-                    // Заполняем выпадающие списки
-                    cameras.forEach(camera => {
-                        const option = document.createElement('option');
-                        option.value = camera.deviceId;
-                        option.text = camera.label || `Камера ${cameraSelect.options.length}`;
-                        cameraSelect.appendChild(option);
-                    });
-                    
-                    microphones.forEach(microphone => {
-                        const option = document.createElement('option');
-                        option.value = microphone.deviceId;
-                        option.text = microphone.label || `Микрофон ${microphoneSelect.options.length}`;
-                        microphoneSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Ошибка загрузки медиаустройств:', error);
-                }
-            }
-            
-            // Смена камеры
-            async function changeCamera() {
-                if (!localStream || !callInProgress) return;
-                
-                const deviceId = cameraSelect.value;
-                
-                try {
-                    // Останавливаем текущие видеодорожки
-                    localStream.getVideoTracks().forEach(track => track.stop());
-                    
-                    // Получаем новый поток с выбранной камерой
-                    const constraints = {
-                        video: deviceId === 'default' ? true : { deviceId: { exact: deviceId } },
-                        audio: isAudioEnabled
-                    };
-                    
-                    const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    
-                    // Заменяем видеодорожку
-                    const videoTrack = newStream.getVideoTracks()[0];
-                    const oldVideoTrack = localStream.getVideoTracks()[0];
-                    
-                    if (oldVideoTrack) {
-                        localStream.removeTrack(oldVideoTrack);
-                    }
-                    
-                    localStream.addTrack(videoTrack);
-                    localVideo.srcObject = localStream;
-                    
-                } catch (error) {
-                    console.error('Ошибка смены камеры:', error);
-                    showNotification('message', 'Ошибка', 'Не удалось переключить камеру');
-                }
-            }
-            
-            // Смена микрофона
-            async function changeMicrophone() {
-                if (!localStream || !callInProgress) return;
-                
-                const deviceId = microphoneSelect.value;
-                
-                try {
-                    // Останавливаем текущие аудиодорожки
-                    localStream.getAudioTracks().forEach(track => track.stop());
-                    
-                    // Получаем новый поток с выбранным микрофоном
-                    const constraints = {
-                        video: isVideoEnabled,
-                        audio: deviceId === 'default' ? true : { deviceId: { exact: deviceId } }
-                    };
-                    
-                    const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    
-                    // Заменяем аудиодорожку
-                    const audioTrack = newStream.getAudioTracks()[0];
-                    const oldAudioTrack = localStream.getAudioTracks()[0];
-                    
-                    if (oldAudioTrack) {
-                        localStream.removeTrack(oldAudioTrack);
-                    }
-                    
-                    localStream.addTrack(audioTrack);
-                    
-                } catch (error) {
-                    console.error('Ошибка смены микрофона:', error);
-                    showNotification('message', 'Ошибка', 'Не удалось переключить микрофон');
-                }
-            }
-            
-            // Показать уведомление
-            function showNotification(type, title, text, actions = []) {
-                notification.className = `notification ${type}`;
-                notificationTitle.textContent = title;
-                notificationText.textContent = text;
-                
-                // Устанавливаем иконку
-                const icon = notification.querySelector('.notification-icon i');
-                if (type === 'incoming-call') {
-                    icon.className = 'fas fa-phone';
-                    // Добавляем пульсацию для входящего звонка
-                    notification.classList.add('pulse');
-                } else {
-                    icon.className = 'fas fa-bell';
-                    notification.classList.remove('pulse');
-                }
-                
-                // Добавляем действия
-                notificationActions.innerHTML = '';
-                actions.forEach(action => {
-                    const button = document.createElement('button');
-                    button.className = `btn btn-small btn-${action.type}`;
-                    button.textContent = action.text;
-                    button.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        if (typeof window[action.action] === 'function') {
-                            window[action.action]();
-                        }
-                    });
-                    notificationActions.appendChild(button);
-                });
-                
-                // Показываем уведомление
-                notification.classList.add('show');
-                
-                // Автоматически скрываем через 10 секунд (кроме звонков)
-                if (type !== 'incoming-call') {
-                    setTimeout(() => {
-                        hideNotification();
-                    }, 10000);
-                }
-            }
-            
-            // Скрыть уведомление
-            function hideNotification() {
-                notification.classList.remove('show');
-                notification.classList.remove('pulse');
-            }
-            
-            // Показать ошибку
-            function showError(elementId, message) {
-                const errorElement = document.getElementById(elementId);
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-            }
-            
-            // Получить текущее время
+            // Вспомогательные функции
             function getCurrentTime() {
                 const now = new Date();
                 return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             }
             
-            // Получить случайный ответ
             function getRandomReply() {
                 const replies = [
                     "Привет! Как дела?",
@@ -2565,48 +1920,76 @@
                     "Согласен с тобой",
                     "Спасибо за информацию!",
                     "У меня все хорошо",
-                    "Давай встретимся на неделе",
-                    "Только что увидел твое сообщение",
-                    "Звучит интересно!",
-                    "Да, я тоже так думаю",
-                    "Спасибо, что спросил!",
-                    "Рад тебя слышать!"
+                    "Давай встретимся на неделе"
                 ];
-                
                 return replies[Math.floor(Math.random() * replies.length)];
             }
             
-            // Задержка для имитации сетевого запроса
-            function delay(ms) {
+            function showError(elementId, message) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = message;
+                    element.style.display = 'block';
+                }
+            }
+            
+            function hideError(elementId) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            }
+            
+            function resetButton(button, originalText) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+            
+            async function delay(ms) {
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
             
-            // Обработка видимости страницы
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && callInProgress) {
-                    // Если страница стала скрытой во время звонка, показываем уведомление
-                    showNotification('message', 'Звонок активен', 'Вернитесь на страницу, чтобы продолжить звонок');
+            function showNotification(type, title, text) {
+                notification.className = `notification ${type}`;
+                document.getElementById('notificationTitle').textContent = title;
+                document.getElementById('notificationText').textContent = text;
+                
+                const icon = notification.querySelector('.notification-icon i');
+                if (type === 'incoming-call') {
+                    icon.className = 'fas fa-phone';
+                    notification.classList.add('pulse');
+                } else {
+                    icon.className = 'fas fa-bell';
+                    notification.classList.remove('pulse');
                 }
-            });
-            
-            // Добавляем глобальные функции для уведомлений
-            window.simulateAcceptCall = simulateAcceptCall;
-            window.simulateDeclineCall = simulateDeclineCall;
+                
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    notification.classList.remove('pulse');
+                }, 5000);
+            }
             
             // Дебаг информация
-            console.log('Приложение SkyMessage инициализировано');
-            console.log('Демо-пользователи (пароль для всех: password123):');
-            console.log('1. alex_sky - Александр');
-            console.log('2. maria_chat - Мария');
-            console.log('3. max_talk - Максим');
-            console.log('4. anna_web - Анна');
-            console.log('5. dmitry_conn - Дмитрий');
-            console.log('6. olga_sky - Ольга');
-            console.log('7. ivan_mess - Иван');
-            console.log('8. sveta_chat - Светлана');
-            console.log('9. petr_web - Пётр');
-            console.log('10. katy_msg - Екатерина');
-            console.log('Для очистки всех данных нажмите Ctrl+Shift+D');
+            console.log('=== SkyMessage Debug Info ===');
+            console.log('Всего пользователей в системе:', SkyMessageDB.users.length);
+            console.log('Демо-пользователи (пароль: password123):');
+            SkyMessageDB.users.forEach((user, index) => {
+                if (user.id.startsWith('demo')) {
+                    console.log(`${index + 1}. ${user.username} - ${user.name}`);
+                }
+            });
+            console.log('Для очистки данных нажмите Ctrl+Shift+D');
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                    if (confirm('Очистить все данные приложения?')) {
+                        localStorage.clear();
+                        location.reload();
+                    }
+                }
+            });
         });
     </script>
 </body>
