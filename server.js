@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,12 +22,17 @@ const JSON_BIN_ACCESS_KEY = "$2a$10$I2I96lPMR/JKjetj1oc93eTQG.dkoeYEtV1j88hu5qFK
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 
 // Хранилище пользователей онлайн
 const onlineUsers = new Map();
 // Хранилище звонков
 const activeCalls = new Map();
+
+// Маршрут для главной страницы
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // API endpoints
 app.get('/api/users', async (req, res) => {
@@ -103,9 +109,11 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.get('/api/messages/:chatId', async (req, res) => {
+app.get('/api/messages/:userId1/:userId2', async (req, res) => {
   try {
-    const { chatId } = req.params;
+    const { userId1, userId2 } = req.params;
+    const chatId = [userId1, userId2].sort().join('_');
+    
     const messages = await fetchFromJSONBin('messages');
     const chatMessages = messages.filter(msg => msg.chatId === chatId);
     
@@ -135,12 +143,6 @@ app.post('/api/messages', async (req, res) => {
     
     res.json({ success: true, message });
     
-    // Отправка уведомления через WebSocket
-    const recipientSocketId = onlineUsers.get(message.receiverId);
-    if (recipientSocketId) {
-      io.to(recipientSocketId).emit('newMessage', message);
-    }
-    
   } catch (error) {
     console.error('Ошибка при сохранении сообщения:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
@@ -151,31 +153,47 @@ app.post('/api/messages', async (req, res) => {
 io.on('connection', (socket) => {
   console.log('Новый пользователь подключен:', socket.id);
   
+  let currentUserId = null;
+  
   // Регистрация пользователя
-  socket.on('registerUser', (userId) => {
+  socket.on('register', (data) => {
+    const { userId } = data;
+    currentUserId = userId;
     onlineUsers.set(userId, socket.id);
     console.log(`Пользователь ${userId} зарегистрирован с socket.id ${socket.id}`);
     
     // Уведомляем всех о новом онлайн пользователе
-    socket.broadcast.emit('userOnline', userId);
+    socket.broadcast.emit('userOnline', { userId });
   });
   
   // Отправка сообщения
-  socket.on('sendMessage', (message) => {
-    console.log('Получено сообщение:', message);
+  socket.on('message', (data) => {
+    console.log('Получено сообщение от', currentUserId);
+    
+    const message = data.data;
+    
+    // Сохраняем сообщение в базу
+    saveMessageToDB(message).catch(console.error);
     
     // Пересылка сообщения получателю, если он онлайн
     const recipientSocketId = onlineUsers.get(message.receiverId);
     if (recipientSocketId) {
-      io.to(recipientSocketId).emit('newMessage', message);
+      io.to(recipientSocketId).emit('message', {
+        type: 'message',
+        data: message
+      });
     }
     
     // Также отправляем отправителю подтверждение
-    socket.emit('messageSent', message);
+    socket.emit('message', {
+      type: 'messageSent',
+      data: message
+    });
   });
   
   // Инициация звонка
-  socket.on('initiateCall', (callData) => {
+  socket.on('call', (data) => {
+    const callData = data.data;
     const { callerId, recipientId, callId, isVideoCall } = callData;
     console.log(`Инициация звонка ${callId} от ${callerId} к ${recipientId}`);
     
@@ -185,79 +203,93 @@ io.on('connection', (socket) => {
       recipientId,
       callId,
       isVideoCall,
+      callerSocketId: socket.id,
       status: 'ringing'
     });
     
     // Отправляем уведомление о звонке получателю
     const recipientSocketId = onlineUsers.get(recipientId);
     if (recipientSocketId) {
-      io.to(recipientSocketId).emit('incomingCall', {
-        callerId,
-        callId,
-        isVideoCall
+      io.to(recipientSocketId).emit('call', {
+        type: 'call',
+        data: {
+          callerId,
+          callId,
+          isVideoCall
+        }
       });
     } else {
       // Если получатель оффлайн, уведомляем звонящего
-      socket.emit('callFailed', { callId, reason: 'Пользователь оффлайн' });
+      socket.emit('call', {
+        type: 'callFailed',
+        data: { callId, reason: 'Пользователь оффлайн' }
+      });
     }
   });
   
   // Принятие звонка
-  socket.on('acceptCall', (callData) => {
+  socket.on('callAccepted', (data) => {
+    const callData = data.data;
     const { callId, recipientId } = callData;
     const call = activeCalls.get(callId);
     
-    if (call) {
+    if (call && call.recipientId === recipientId) {
       call.status = 'accepted';
+      call.recipientSocketId = socket.id;
       activeCalls.set(callId, call);
       
       // Уведомляем звонящего о принятии звонка
-      const callerSocketId = onlineUsers.get(call.callerId);
-      if (callerSocketId) {
-        io.to(callerSocketId).emit('callAccepted', {
+      io.to(call.callerSocketId).emit('call', {
+        type: 'callAccepted',
+        data: {
           callId,
           recipientId
-        });
-      }
+        }
+      });
       
       console.log(`Звонок ${callId} принят`);
     }
   });
   
   // Отклонение звонка
-  socket.on('declineCall', (callData) => {
+  socket.on('callDeclined', (data) => {
+    const callData = data.data;
     const { callId, recipientId } = callData;
     const call = activeCalls.get(callId);
     
-    if (call) {
+    if (call && call.recipientId === recipientId) {
       call.status = 'declined';
       activeCalls.set(callId, call);
       
       // Уведомляем звонящего об отклонении звонка
-      const callerSocketId = onlineUsers.get(call.callerId);
-      if (callerSocketId) {
-        io.to(callerSocketId).emit('callDeclined', {
+      io.to(call.callerSocketId).emit('call', {
+        type: 'callDeclined',
+        data: {
           callId,
           recipientId
-        });
-      }
+        }
+      });
       
       console.log(`Звонок ${callId} отклонен`);
     }
   });
   
   // Завершение звонка
-  socket.on('endCall', (callData) => {
+  socket.on('callEnded', (data) => {
+    const callData = data.data;
     const { callId } = callData;
     const call = activeCalls.get(callId);
     
     if (call) {
       // Уведомляем другую сторону о завершении звонка
-      const otherUserId = socket.userId === call.callerId ? call.recipientId : call.callerId;
-      const otherUserSocketId = onlineUsers.get(otherUserId);
+      const otherSocketId = socket.id === call.callerSocketId ? 
+        call.recipientSocketId : call.callerSocketId;
       
-      if (otherUserSocketId) {
-        io.to(otherUserSocketId).emit('callEnded', { callId });
+      if (otherSocketId) {
+        io.to(otherSocketId).emit('call', {
+          type: 'callEnded',
+          data: { callId }
+        });
       }
       
       // Удаляем информацию о звонке
@@ -268,45 +300,48 @@ io.on('connection', (socket) => {
   
   // WebRTC сигналы
   socket.on('webrtcSignal', (data) => {
-    const { to, signal, callId } = data;
+    const signalData = data.data;
+    const { to, signal, callId } = signalData;
     
-    // Пересылаем сигнал получателю
+    // Находим сокет получателя
     const recipientSocketId = onlineUsers.get(to);
+    
     if (recipientSocketId) {
       io.to(recipientSocketId).emit('webrtcSignal', {
-        from: socket.userId,
-        signal,
-        callId
+        type: 'webrtcSignal',
+        data: {
+          from: currentUserId,
+          signal,
+          callId
+        }
       });
     }
   });
   
   // Отключение пользователя
   socket.on('disconnect', () => {
-    // Находим пользователя по socket.id и удаляем его
-    let disconnectedUserId = null;
-    for (let [userId, sockId] of onlineUsers.entries()) {
-      if (sockId === socket.id) {
-        disconnectedUserId = userId;
-        onlineUsers.delete(userId);
-        break;
-      }
-    }
+    console.log(`Пользователь отключен: ${socket.id}`);
     
-    if (disconnectedUserId) {
-      console.log(`Пользователь ${disconnectedUserId} отключен`);
+    if (currentUserId) {
+      onlineUsers.delete(currentUserId);
       
       // Уведомляем всех об отключении пользователя
-      socket.broadcast.emit('userOffline', disconnectedUserId);
+      socket.broadcast.emit('userOffline', { userId: currentUserId });
       
       // Завершаем активные звонки пользователя
       for (let [callId, call] of activeCalls.entries()) {
-        if (call.callerId === disconnectedUserId || call.recipientId === disconnectedUserId) {
-          const otherUserId = call.callerId === disconnectedUserId ? call.recipientId : call.callerId;
-          const otherUserSocketId = onlineUsers.get(otherUserId);
+        if (call.callerId === currentUserId || call.recipientId === currentUserId) {
+          const otherSocketId = call.callerId === currentUserId ? 
+            call.recipientSocketId : call.callerSocketId;
           
-          if (otherUserSocketId) {
-            io.to(otherUserSocketId).emit('callEnded', { callId, reason: 'Пользователь отключился' });
+          if (otherSocketId) {
+            io.to(otherSocketId).emit('call', {
+              type: 'callEnded',
+              data: { 
+                callId, 
+                reason: 'Пользователь отключился' 
+              }
+            });
           }
           
           activeCalls.delete(callId);
@@ -315,6 +350,17 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+// Функция сохранения сообщения в базу данных
+async function saveMessageToDB(message) {
+  try {
+    const messages = await fetchFromJSONBin('messages');
+    messages.push(message);
+    await updateJSONBin('messages', messages);
+  } catch (error) {
+    console.error('Ошибка при сохранении сообщения в базу:', error);
+  }
+}
 
 // Функции для работы с JSONBin.io
 async function fetchFromJSONBin(binName) {
@@ -385,7 +431,10 @@ function generateId() {
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Сервер SkyMessage запущен на порту ${PORT}`);
+  console.log(`=== SkyMessage Server ===`);
+  console.log(`Сервер запущен на порту ${PORT}`);
   console.log(`Доступен по адресу: http://localhost:${PORT}`);
-  console.log('Используемый JSONBin ID:', JSON_BIN_ID);
+  console.log(`Используемый JSONBin ID: ${JSON_BIN_ID}`);
+  console.log(`WebSocket: ws://localhost:${PORT}`);
+  console.log(`========================`);
 });
