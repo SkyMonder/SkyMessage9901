@@ -403,13 +403,13 @@
         }
 
         .call-container {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
+            z-index: 2000;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -534,6 +534,63 @@
 
         .notification.info {
             background-color: var(--primary-color);
+        }
+
+        .incoming-call-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1500;
+            display: none;
+            max-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .incoming-call-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .incoming-call-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .incoming-call-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .incoming-call-info p {
+            margin: 5px 0 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .incoming-call-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
         }
 
         .loading {
@@ -902,6 +959,25 @@
         </div>
     </div>
     
+    <!-- Уведомление о входящем звонке -->
+    <div class="incoming-call-notification" id="incomingCallNotification">
+        <div class="incoming-call-header">
+            <div class="incoming-call-avatar" id="incomingCallAvatar">U</div>
+            <div class="incoming-call-info">
+                <h3 id="incomingCallName">Пользователь</h3>
+                <p id="incomingCallType">Входящий видеозвонок</p>
+            </div>
+        </div>
+        <div class="incoming-call-actions">
+            <button id="notificationAcceptCallBtn" class="btn btn-secondary" style="flex: 1;">
+                <i class="fas fa-phone"></i> Принять
+            </button>
+            <button id="notificationDeclineCallBtn" class="btn btn-danger" style="flex: 1;">
+                <i class="fas fa-phone-slash"></i> Отклонить
+            </button>
+        </div>
+    </div>
+    
     <!-- Уведомления -->
     <div id="notification" class="notification">
         <i class="fas fa-info-circle"></i>
@@ -915,13 +991,13 @@
         let messages = {};
         let socket = null;
         let peerConnection = null;
-        let dataChannel = null;
         let localStream = null;
         let isCaller = false;
         let callInProgress = false;
         let currentCallId = null;
         let isVideoCall = true;
         let isPhoneMode = localStorage.getItem('skyMessagePhoneMode') === 'true';
+        let pendingIncomingCall = null;
         
         // Конфигурация для JSONBin.io
         const JSON_BIN_ID = "69884cadae596e708f1a1337";
@@ -975,6 +1051,12 @@
         const backToContacts = document.getElementById('backToContacts');
         const phoneModeBtn = document.getElementById('phoneModeBtn');
         const phoneModeText = document.getElementById('phoneModeText');
+        const incomingCallNotification = document.getElementById('incomingCallNotification');
+        const incomingCallAvatar = document.getElementById('incomingCallAvatar');
+        const incomingCallName = document.getElementById('incomingCallName');
+        const incomingCallType = document.getElementById('incomingCallType');
+        const notificationAcceptCallBtn = document.getElementById('notificationAcceptCallBtn');
+        const notificationDeclineCallBtn = document.getElementById('notificationDeclineCallBtn');
         
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', initApp);
@@ -985,6 +1067,9 @@
                 document.body.classList.add('phone-mode');
                 phoneModeText.textContent = 'Обычный режим';
             }
+            
+            // Загружаем сообщения из localStorage
+            loadMessagesFromLocalStorage();
             
             // Проверяем, есть ли сохраненный пользователь
             const savedUser = localStorage.getItem('skyMessageUser');
@@ -1037,6 +1122,17 @@
             toggleVideoBtn.addEventListener('click', toggleVideo);
             toggleAudioBtn.addEventListener('click', toggleAudio);
             
+            // Уведомления о звонках
+            notificationAcceptCallBtn.addEventListener('click', () => {
+                incomingCallNotification.style.display = 'none';
+                acceptCall();
+            });
+            
+            notificationDeclineCallBtn.addEventListener('click', () => {
+                incomingCallNotification.style.display = 'none';
+                declineCall();
+            });
+            
             // Навигация
             backToContacts.addEventListener('click', () => {
                 document.querySelector('.chat-panel').classList.remove('active');
@@ -1086,9 +1182,6 @@
             
             // Загружаем контакты
             loadContacts();
-            
-            // Загружаем историю сообщений из localStorage
-            loadMessagesFromLocalStorage();
             
             // Подключаемся к WebSocket серверу
             connectWebSocket();
@@ -1200,7 +1293,6 @@
         function handleLogout() {
             currentUser = null;
             localStorage.removeItem('skyMessageUser');
-            localStorage.removeItem('skyMessageMessages');
             
             if (socket) {
                 socket.close();
@@ -1371,6 +1463,8 @@
             // Сначала загружаем из localStorage
             if (messages[chatId]) {
                 displayMessages();
+            } else {
+                messages[chatId] = [];
             }
             
             // Затем пытаемся загрузить с сервера
@@ -1379,10 +1473,6 @@
                 const serverMessages = allMessages.filter(msg => msg.chatId === chatId);
                 
                 // Объединяем с локальными сообщениями, устраняя дубликаты
-                if (!messages[chatId]) {
-                    messages[chatId] = [];
-                }
-                
                 const existingIds = new Set(messages[chatId].map(msg => msg.id));
                 serverMessages.forEach(msg => {
                     if (!existingIds.has(msg.id)) {
@@ -1533,7 +1623,8 @@
                 if (currentUser) {
                     socket.send(JSON.stringify({
                         type: 'register',
-                        userId: currentUser.id
+                        userId: currentUser.id,
+                        username: currentUser.username
                     }));
                 }
             };
@@ -1541,6 +1632,7 @@
             socket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    console.log('Получено WebSocket сообщение:', data);
                     
                     switch (data.type) {
                         case 'message':
@@ -1561,6 +1653,12 @@
                         case 'webrtcSignal':
                             handleWebRTCSignal(data.data);
                             break;
+                        case 'userOnline':
+                            console.log('Пользователь онлайн:', data.userId);
+                            break;
+                        case 'userOffline':
+                            console.log('Пользователь оффлайн:', data.userId);
+                            break;
                     }
                 } catch (error) {
                     console.error('Ошибка обработки WebSocket сообщения:', error);
@@ -1579,6 +1677,8 @@
         }
         
         function handleIncomingMessage(message) {
+            console.log('Обработка входящего сообщения:', message);
+            
             // Проверяем, относится ли сообщение к текущему пользователю
             if (message.receiverId !== currentUser.id && message.senderId !== currentUser.id) {
                 return;
@@ -1616,7 +1716,7 @@
             }
         }
         
-        // Функции для звонков (оставлены как в предыдущей версии)
+        // Функции для звонков
         async function initiateCall(withVideo = true) {
             if (!selectedUser || callInProgress) return;
             
@@ -1627,7 +1727,7 @@
             
             // Настраиваем интерфейс звонка
             callContactName.textContent = selectedUser.username;
-            callStatus.innerHTML = `Инициирован ${withVideo ? 'видео' : 'голосовой'} звонок...`;
+            callStatus.innerHTML = `Звонок ${selectedUser.username}...`;
             callLoader.style.display = 'flex';
             incomingCallControls.style.display = 'none';
             outgoingCallControls.style.display = 'flex';
@@ -1644,6 +1744,7 @@
                         type: 'call',
                         data: {
                             callerId: currentUser.id,
+                            callerName: currentUser.username,
                             recipientId: selectedUser.id,
                             callId: currentCallId,
                             isVideoCall: withVideo
@@ -1651,7 +1752,7 @@
                     }));
                 }
                 
-                showNotification(`Инициирован ${withVideo ? 'видео' : 'голосовой'} звонок с ${selectedUser.username}`, 'info');
+                showNotification(`Звонок ${selectedUser.username}...`, 'info');
                 
                 // Таймаут ожидания ответа (30 секунд)
                 setTimeout(() => {
@@ -1732,40 +1833,76 @@
         }
         
         function handleIncomingCall(callData) {
-            if (callInProgress) return;
+            console.log('Получен входящий звонок:', callData);
             
-            const { callerId, callId, isVideoCall } = callData;
+            if (callInProgress) {
+                // Если уже есть активный звонок, отклоняем новый
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
+                        type: 'callDeclined',
+                        data: {
+                            callId: callData.callId,
+                            recipientId: currentUser.id
+                        }
+                    }));
+                }
+                return;
+            }
+            
+            const { callerId, callerName, callId, isVideoCall } = callData;
             
             currentCallId = callId;
             isVideoCall = isVideoCall;
             callInProgress = true;
+            pendingIncomingCall = callData;
             
-            // Настраиваем интерфейс входящего звонка
-            callContactName.textContent = 'Пользователь';
-            callStatus.textContent = `Входящий ${isVideoCall ? 'видео' : 'голосовой'} звонок...`;
-            callLoader.style.display = 'none';
-            incomingCallControls.style.display = 'flex';
-            outgoingCallControls.style.display = 'none';
-            activeCallControls.style.display = 'none';
-            callContainer.style.display = 'flex';
-            
-            // Показываем уведомление
-            showNotification(`Входящий ${isVideoCall ? 'видео' : 'голосовой'} звонок`, 'info');
+            // Показываем уведомление о входящем звонке
+            showIncomingCallNotification(callerName, isVideoCall);
             
             // Автоматическое отклонение через 60 секунд
             setTimeout(() => {
-                if (callInProgress && incomingCallControls.style.display !== 'none') {
+                if (callInProgress && incomingCallNotification.style.display !== 'none') {
+                    incomingCallNotification.style.display = 'none';
                     declineCall();
                 }
             }, 60000);
         }
         
+        function showIncomingCallNotification(callerName, isVideoCall) {
+            incomingCallAvatar.textContent = callerName.charAt(0).toUpperCase();
+            incomingCallName.textContent = callerName;
+            incomingCallType.textContent = isVideoCall ? 'Входящий видеозвонок' : 'Входящий голосовой звонок';
+            incomingCallNotification.style.display = 'block';
+            
+            // Воспроизводим звук звонка
+            playCallSound();
+            
+            showNotification(`Входящий звонок от ${callerName}`, 'info');
+        }
+        
+        function playCallSound() {
+            // Создаем аудио элемент для звонка
+            const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ');
+            // В реальном приложении здесь должен быть звук звонка
+        }
+        
         async function acceptCall() {
             try {
+                incomingCallNotification.style.display = 'none';
+                
                 await startLocalStream(isVideoCall);
                 
+                // Настраиваем интерфейс активного звонка
+                callContactName.textContent = pendingIncomingCall ? pendingIncomingCall.callerName : 'Пользователь';
+                callStatus.textContent = 'Соединение устанавливается...';
+                callLoader.style.display = 'flex';
+                incomingCallControls.style.display = 'none';
+                outgoingCallControls.style.display = 'none';
+                activeCallControls.style.display = 'flex';
+                callContainer.style.display = 'flex';
+                
                 // Отправляем подтверждение звонка
-                if (socket && socket.readyState === WebSocket.OPEN) {
+                if (socket && socket.readyState === WebSocket.OPEN && currentCallId) {
                     socket.send(JSON.stringify({
                         type: 'callAccepted',
                         data: {
@@ -1774,13 +1911,6 @@
                         }
                     }));
                 }
-                
-                // Настраиваем интерфейс активного звонка
-                callStatus.textContent = 'Соединение устанавливается...';
-                callLoader.style.display = 'flex';
-                incomingCallControls.style.display = 'none';
-                outgoingCallControls.style.display = 'none';
-                activeCallControls.style.display = 'flex';
                 
                 // Инициируем WebRTC соединение
                 setupPeerConnection();
@@ -1795,7 +1925,7 @@
         }
         
         function declineCall() {
-            if (socket && socket.readyState === WebSocket.OPEN) {
+            if (socket && socket.readyState === WebSocket.OPEN && currentCallId) {
                 socket.send(JSON.stringify({
                     type: 'callDeclined',
                     data: {
@@ -1806,6 +1936,8 @@
             }
             
             callInProgress = false;
+            pendingIncomingCall = null;
+            incomingCallNotification.style.display = 'none';
             callContainer.style.display = 'none';
             
             if (localStream) {
@@ -1817,6 +1949,8 @@
         }
         
         function handleCallAccepted(data) {
+            console.log('Звонок принят другим пользователем:', data);
+            
             if (!callInProgress || data.callId !== currentCallId) return;
             
             callStatus.textContent = 'Соединение устанавливается...';
@@ -1829,6 +1963,8 @@
         }
         
         function handleCallDeclined(data) {
+            console.log('Звонок отклонен другим пользователем:', data);
+            
             if (data.callId === currentCallId) {
                 callStatus.textContent = 'Звонок отклонен';
                 callLoader.style.display = 'none';
@@ -1843,6 +1979,8 @@
         }
         
         function handleCallEnded(data) {
+            console.log('Звонок завершен:', data);
+            
             if (data.callId === currentCallId) {
                 callStatus.textContent = 'Звонок завершен';
                 callLoader.style.display = 'none';
@@ -1879,6 +2017,7 @@
             
             // Обработка удаленного потока
             peerConnection.ontrack = (event) => {
+                console.log('Получен удаленный поток');
                 remoteVideo.srcObject = event.streams[0];
                 callStatus.textContent = 'Соединение установлено';
                 callLoader.style.display = 'none';
@@ -1887,17 +2026,20 @@
             // Генерация ICE кандидатов
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate && socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({
-                        type: 'webrtcSignal',
-                        data: {
-                            to: isCaller ? selectedUser.id : 'unknown',
-                            signal: {
-                                type: 'candidate',
-                                candidate: event.candidate
-                            },
-                            callId: currentCallId
-                        }
-                    }));
+                    const targetUserId = isCaller ? selectedUser.id : (pendingIncomingCall ? pendingIncomingCall.callerId : null);
+                    if (targetUserId) {
+                        socket.send(JSON.stringify({
+                            type: 'webrtcSignal',
+                            data: {
+                                to: targetUserId,
+                                signal: {
+                                    type: 'candidate',
+                                    candidate: event.candidate
+                                },
+                                callId: currentCallId
+                            }
+                        }));
+                    }
                 }
             };
             
@@ -1926,6 +2068,8 @@
         }
         
         function handleWebRTCSignal(signalData) {
+            console.log('Получен WebRTC сигнал:', signalData);
+            
             if (!peerConnection || signalData.callId !== currentCallId) return;
             
             const signal = signalData.signal;
@@ -1967,7 +2111,11 @@
         }
         
         function endCall() {
+            console.log('Завершение звонка');
+            
             callInProgress = false;
+            pendingIncomingCall = null;
+            incomingCallNotification.style.display = 'none';
             callContainer.style.display = 'none';
             
             if (localStream) {
