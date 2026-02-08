@@ -3,1344 +3,1487 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkyMessage - Реальный мессенджер</title>
+    <title>SkyMessage - Мессенджер</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Стили остаются те же, но добавлены новые */
-        /* ... все предыдущие стили ... */
-        
-        .typing-indicator {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #34a853;
+            --danger-color: #ea4335;
+            --dark-color: #202124;
+            --light-color: #f8f9fa;
+            --gray-color: #dadce0;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* Левая панель - контакты */
+        .contacts-panel {
+            width: 350px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+
+        /* Правая панель - чат и звонки */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+
+        /* Заголовки панелей */
+        .panel-header {
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
             display: flex;
             align-items: center;
-            padding: 10px;
-            font-size: 0.8rem;
-            color: var(--gray-color);
-            font-style: italic;
+            justify-content: space-between;
         }
-        
-        .typing-dots {
+
+        .panel-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .user-info {
             display: flex;
-            margin-left: 5px;
+            align-items: center;
+            gap: 10px;
         }
-        
-        .typing-dots span {
-            width: 4px;
-            height: 4px;
-            background-color: var(--gray-color);
+
+        .avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            margin: 0 1px;
-            animation: typing 1.4s infinite;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
         }
-        
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
+
+        /* Формы входа и регистрации */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            flex: 1;
         }
-        
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
+
+        .auth-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
         }
-        
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
+
+        .auth-title {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            text-align: center;
         }
-        
-        .message-status {
-            font-size: 0.7rem;
-            margin-left: 5px;
-            opacity: 0.7;
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        
-        .message-status.delivered {
-            color: #4caf50;
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
         }
-        
-        .message-status.read {
-            color: #2196f3;
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--gray-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0d62d9;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2a9447;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #d33426;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(26, 115, 232, 0.1);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .auth-switch a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Поиск пользователей */
+        .search-container {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .search-box input {
+            padding-left: 45px;
+        }
+
+        /* Список контактов */
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .contact-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .contact-item.active {
+            background-color: rgba(26, 115, 232, 0.1);
+        }
+
+        .contact-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #555;
+            margin-right: 15px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .contact-last-msg {
+            font-size: 14px;
+            color: #777;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        /* Область чата */
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-contact-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #f5f7fb;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message-outgoing {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-incoming {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            text-align: right;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        /* Форма отправки сообщения */
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+        }
+
+        .message-input {
+            flex: 1;
+        }
+
+        /* Окно звонка */
+        .call-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            display: none;
+        }
+
+        .call-info {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .call-contact-name {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .call-status {
+            font-size: 18px;
+            color: #ccc;
+        }
+
+        .video-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 60vh;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            background-color: #333;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background-color: #555;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+
+        .call-controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        .call-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            color: white;
+        }
+
+        .call-btn.accept {
+            background-color: var(--secondary-color);
+        }
+
+        .call-btn.decline, .call-btn.end-call {
+            background-color: var(--danger-color);
+        }
+
+        .call-btn.mute, .call-btn.video {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .call-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification.success {
+            background-color: var(--secondary-color);
+        }
+
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+
+        .notification.info {
+            background-color: var(--primary-color);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 900px) {
+            .container {
+                height: 95vh;
+            }
+            
+            .contacts-panel {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                height: 98vh;
+            }
+            
+            .contacts-panel {
+                width: 100%;
+            }
+            
+            .chat-panel {
+                display: none;
+            }
+            
+            .chat-panel.active {
+                display: flex;
+            }
+            
+            .back-to-contacts {
+                display: block;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .back-to-contacts {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            margin-right: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="api-status" id="apiStatus">API: Проверка...</div>
-    
-    <div class="container" id="appContainer">
-        <div class="auth-container" id="authContainer">
-            <!-- Форма входа/регистрации (остаётся без изменений) -->
+    <div class="container">
+        <!-- Левая панель контактов -->
+        <div class="contacts-panel">
+            <div class="panel-header">
+                <div class="panel-title">SkyMessage</div>
+                <div class="user-info">
+                    <div class="avatar" id="currentUserAvatar">U</div>
+                    <div id="currentUsername">Гость</div>
+                    <button id="logoutBtn" class="btn btn-outline" style="padding: 8px 15px; margin-left: 10px; display: none;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Формы авторизации -->
+            <div id="authContainer" class="auth-container">
+                <div id="loginForm" class="auth-form">
+                    <h2 class="auth-title">Вход в SkyMessage</h2>
+                    <div class="form-group">
+                        <label for="loginUsername">Никнейм</label>
+                        <input type="text" id="loginUsername" placeholder="Введите ваш никнейм">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Пароль</label>
+                        <input type="password" id="loginPassword" placeholder="Введите пароль">
+                    </div>
+                    <button id="loginBtn" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </button>
+                    <div class="auth-switch">
+                        Нет аккаунта? <a id="showRegister">Зарегистрироваться</a>
+                    </div>
+                </div>
+                
+                <div id="registerForm" class="auth-form hidden">
+                    <h2 class="auth-title">Регистрация в SkyMessage</h2>
+                    <div class="form-group">
+                        <label for="registerUsername">Никнейм</label>
+                        <input type="text" id="registerUsername" placeholder="Придумайте уникальный никнейм">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Пароль</label>
+                        <input type="password" id="registerPassword" placeholder="Придумайте надежный пароль">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">Подтверждение пароля</label>
+                        <input type="password" id="registerConfirmPassword" placeholder="Повторите пароль">
+                    </div>
+                    <button id="registerBtn" class="btn btn-secondary" style="width: 100%;">
+                        <i class="fas fa-user-plus"></i> Зарегистрироваться
+                    </button>
+                    <div class="auth-switch">
+                        Уже есть аккаунт? <a id="showLogin">Войти</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Панель контактов и поиска (скрыта до входа) -->
+            <div id="mainPanel" class="hidden" style="display: flex; flex-direction: column; flex: 1;">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchUser" placeholder="Поиск пользователя по никнейму...">
+                    </div>
+                </div>
+                
+                <div class="contacts-list" id="contactsList">
+                    <!-- Список контактов будет загружен здесь -->
+                    <div style="text-align: center; padding: 30px; color: #777;">
+                        <i class="fas fa-users fa-2x" style="margin-bottom: 15px;"></i>
+                        <p>Начните поиск пользователей, чтобы начать общение</p>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="main-container" id="mainContainer">
-            <!-- Интерфейс чата (остаётся без изменений) -->
+        <!-- Правая панель чата -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <button class="back-to-contacts" id="backToContacts">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="chat-contact-info">
+                    <div class="avatar" id="chatUserAvatar">U</div>
+                    <div>
+                        <div id="chatUserName">Выберите пользователя</div>
+                        <div id="chatUserStatus" style="font-size: 14px; color: #777;">offline</div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button id="voiceCallBtn" class="btn btn-outline" title="Голосовой звонок">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button id="videoCallBtn" class="btn btn-outline" title="Видеозвонок">
+                        <i class="fas fa-video"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div style="text-align: center; margin-top: 50px; color: #999;">
+                    <i class="fas fa-comments fa-3x" style="margin-bottom: 20px;"></i>
+                    <p>Выберите пользователя, чтобы начать общение</p>
+                </div>
+            </div>
+            
+            <div class="message-input-container">
+                <div class="message-input">
+                    <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
+                </div>
+                <button id="sendMessageBtn" class="btn btn-primary" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
+    </div>
+    
+    <!-- Окно звонка -->
+    <div class="call-container" id="callContainer">
+        <div class="call-info">
+            <div class="call-contact-name" id="callContactName">Имя пользователя</div>
+            <div class="call-status" id="callStatus">Установка соединения...</div>
+        </div>
+        
+        <div class="video-container">
+            <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+            <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+        </div>
+        
+        <div class="call-controls">
+            <button id="toggleVideoBtn" class="call-btn video" title="Включить/выключить камеру">
+                <i class="fas fa-video"></i>
+            </button>
+            <button id="toggleAudioBtn" class="call-btn mute" title="Включить/выключить микрофон">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="endCallBtn" class="call-btn end-call" title="Завершить звонок">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
+        
+        <div class="call-controls" id="incomingCallControls" style="display: none;">
+            <button id="acceptCallBtn" class="call-btn accept" title="Принять звонок">
+                <i class="fas fa-phone"></i>
+            </button>
+            <button id="declineCallBtn" class="call-btn decline" title="Отклонить звонок">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Уведомления -->
+    <div id="notification" class="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notificationText">Текст уведомления</span>
     </div>
 
     <script>
-        // ===== КОНФИГУРАЦИЯ JSONBIN.IO =====
-        const JSONBIN_CONFIG = {
-            // Основной BIN для пользователей
-            USERS_BIN_ID: '69884cadae596e708f1a1337',
-            
-            // Бин для сообщений (создастся автоматически)
-            MESSAGES_BIN_ID: null,
-            
-            // Ваш Access Key
-            ACCESS_KEY: '$2a$10$I2I96lPMR/JKjetj1oc93eTQG.dkoeYEtV1j88hu5qFK8D0yAq6k2',
-            
-            // Версия API
-            API_VERSION: 'v3',
-            
-            // Базовый URL
-            BASE_URL: 'https://api.jsonbin.io',
-            
-            // Получение заголовков
-            getHeaders: function() {
-                return {
-                    'Content-Type': 'application/json',
-                    'X-Access-Key': this.ACCESS_KEY,
-                    'X-Bin-Name': 'SkyMessage'
-                };
-            },
-            
-            // Получение URL для операций
-            getUrl: function(binId, operation = 'read', version = 'latest') {
-                if (operation === 'create') {
-                    return `${this.BASE_URL}/${this.API_VERSION}/b`;
-                } else if (operation === 'update') {
-                    return `${this.BASE_URL}/${this.API_VERSION}/b/${binId}`;
-                } else {
-                    return `${this.BASE_URL}/${this.API_VERSION}/b/${binId}/${version}`;
-                }
-            }
+        // Глобальные переменные
+        let currentUser = null;
+        let selectedUser = null;
+        let messages = {};
+        let socket = null;
+        let peerConnection = null;
+        let localStream = null;
+        let isCaller = false;
+        let callInProgress = false;
+        let currentCallId = null;
+        
+        // Конфигурация для JSONBin.io
+        const JSON_BIN_ID = "69884cadae596e708f1a1337";
+        const JSON_BIN_MASTER_KEY = "$2a$10$4t3iUbvJYJRQL0V.G8YE2.01PSIcL0N3EmIdQOI2Wgl0vHac44ikm";
+        const JSON_BIN_ACCESS_KEY = "$2a$10$I2I96lPMR/JKjetj1oc93eTQG.dkoeYEtV1j88hu5qFK8D0yAq6k2";
+        
+        // Конфигурация для WebRTC
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
         };
         
-        // ===== РЕАЛЬНАЯ БАЗА ДАННЫХ =====
-        const RealDatabase = {
-            // Основные данные
-            users: [],
-            messages: {}, // Структура: { "user1_user2": [messages] }
-            userStatuses: {},
-            
-            // Статус соединения
-            isOnline: false,
-            currentUserId: null,
-            
-            // Инициализация
-            init: async function() {
-                console.log('Инициализация RealDatabase...');
-                
-                // Загружаем данные из JSONBin
-                await this.loadData();
-                
-                // Если нет пользователей, создаём демо
-                if (this.users.length === 0) {
-                    console.log('Создаём демо-пользователей...');
-                    await this.createDemoUsers();
-                }
-                
-                console.log('База данных готова. Пользователей:', this.users.length);
-                this.updateApiStatus();
-            },
-            
-            // Загрузка всех данных
-            loadData: async function() {
-                try {
-                    // Загружаем пользователей
-                    const usersResponse = await fetch(
-                        JSONBIN_CONFIG.getUrl(JSONBIN_CONFIG.USERS_BIN_ID, 'read'),
-                        { headers: JSONBIN_CONFIG.getHeaders() }
-                    );
-                    
-                    if (usersResponse.ok) {
-                        const data = await usersResponse.json();
-                        this.users = data.record?.users || [];
-                        this.userStatuses = data.record?.userStatuses || {};
-                        console.log('Загружены пользователи:', this.users.length);
-                    } else if (usersResponse.status === 404) {
-                        console.log('Бин пользователей пустой, начинаем с чистого листа');
-                        this.users = [];
-                        this.userStatuses = {};
-                    } else {
-                        throw new Error(`Ошибка загрузки пользователей: ${usersResponse.status}`);
-                    }
-                    
-                    this.isOnline = true;
-                } catch (error) {
-                    console.warn('Ошибка загрузки из JSONBin:', error);
-                    this.isOnline = false;
-                    
-                    // Пробуем загрузить из localStorage
-                    this.loadFromLocalStorage();
-                }
-            },
-            
-            // Сохранение данных
-            saveData: async function() {
-                if (!this.isOnline) {
-                    this.saveToLocalStorage();
-                    return;
-                }
-                
-                try {
-                    // Сохраняем пользователей
-                    const usersData = {
-                        users: this.users,
-                        userStatuses: this.userStatuses,
-                        lastUpdate: Date.now()
-                    };
-                    
-                    const response = await fetch(
-                        JSONBIN_CONFIG.getUrl(JSONBIN_CONFIG.USERS_BIN_ID, 'update'),
-                        {
-                            method: 'PUT',
-                            headers: JSONBIN_CONFIG.getHeaders(),
-                            body: JSON.stringify(usersData)
-                        }
-                    );
-                    
-                    if (!response.ok) {
-                        throw new Error(`Ошибка сохранения: ${response.status}`);
-                    }
-                    
-                    console.log('Данные сохранены в JSONBin');
-                } catch (error) {
-                    console.error('Ошибка сохранения в JSONBin:', error);
-                    this.saveToLocalStorage();
-                }
-            },
-            
-            // Работа с localStorage
-            loadFromLocalStorage: function() {
-                try {
-                    const data = localStorage.getItem('skyMessageRealDB');
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        this.users = parsed.users || [];
-                        this.userStatuses = parsed.userStatuses || {};
-                        this.messages = parsed.messages || {};
-                        console.log('Загружено из localStorage');
-                    }
-                } catch (e) {
-                    console.error('Ошибка загрузки из localStorage:', e);
-                }
-            },
-            
-            saveToLocalStorage: function() {
-                try {
-                    const data = {
-                        users: this.users,
-                        userStatuses: this.userStatuses,
-                        messages: this.messages,
-                        lastUpdate: Date.now()
-                    };
-                    localStorage.setItem('skyMessageRealDB', JSON.stringify(data));
-                } catch (e) {
-                    console.error('Ошибка сохранения в localStorage:', e);
-                }
-            },
-            
-            // Обновление статуса API
-            updateApiStatus: function() {
-                const statusElement = document.getElementById('apiStatus');
-                if (statusElement) {
-                    statusElement.textContent = this.isOnline ? 'API: Онлайн' : 'API: Офлайн';
-                    statusElement.className = this.isOnline ? 'api-status online' : 'api-status offline';
-                }
-            },
-            
-            // Создание демо-пользователей (РЕАЛЬНЫЕ пользователи)
-            createDemoUsers: async function() {
-                const demoUsers = [
-                    {
-                        id: 'user1',
-                        username: "alex_sky",
-                        name: "Александр",
-                        avatar: "А",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: Date.now(),
-                        online: true,
-                        email: "alex@skymessage.com",
-                        bio: "Разработчик, люблю технологии и путешествия",
-                        registered: Date.now() - 86400000
-                    },
-                    {
-                        id: 'user2',
-                        username: "maria_chat",
-                        name: "Мария",
-                        avatar: "М",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: Date.now(),
-                        online: true,
-                        email: "maria@skymessage.com",
-                        bio: "Дизайнер, увлекаюсь искусством и фотографией",
-                        registered: Date.now() - 172800000
-                    },
-                    {
-                        id: 'user3',
-                        username: "max_talk",
-                        name: "Максим",
-                        avatar: "М",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: Date.now() - 7200000, // 2 часа назад
-                        online: false,
-                        email: "max@skymessage.com",
-                        bio: "Студент, изучаю программирование",
-                        registered: Date.now() - 259200000
-                    },
-                    {
-                        id: 'user4',
-                        username: "anna_web",
-                        name: "Анна",
-                        avatar: "А",
-                        password: "password123",
-                        status: "online",
-                        lastSeen: Date.now(),
-                        online: true,
-                        email: "anna@skymessage.com",
-                        bio: "Маркетолог, люблю спорт и активный отдых",
-                        registered: Date.now() - 345600000
-                    },
-                    {
-                        id: 'user5',
-                        username: "dmitry_conn",
-                        name: "Дмитрий",
-                        avatar: "Д",
-                        password: "password123",
-                        status: "offline",
-                        lastSeen: Date.now() - 86400000, // день назад
-                        online: false,
-                        email: "dmitry@skymessage.com",
-                        bio: "Бизнес-аналитик, увлекаюсь шахматами",
-                        registered: Date.now() - 432000000
-                    }
-                ];
-                
-                this.users = demoUsers;
-                await this.saveData();
-            },
-            
-            // Поиск пользователя
-            findUserByUsername: function(username) {
-                return this.users.find(user => user.username === username);
-            },
-            
-            findUserById: function(userId) {
-                return this.users.find(user => user.id === userId);
-            },
-            
-            // Проверка существования пользователя
-            userExists: function(username) {
-                return this.users.some(user => user.username === username);
-            },
-            
-            // Регистрация нового пользователя
-            registerUser: async function(userData) {
-                if (this.userExists(userData.username)) {
-                    return { success: false, error: 'Пользователь уже существует' };
-                }
-                
-                const newUser = {
-                    id: 'user_' + Date.now(),
-                    username: userData.username,
-                    name: userData.name,
-                    avatar: userData.avatar,
-                    password: userData.password,
-                    status: 'online',
-                    lastSeen: Date.now(),
-                    online: true,
-                    email: userData.email,
-                    bio: userData.bio || 'Новый пользователь SkyMessage',
-                    registered: Date.now()
-                };
-                
-                this.users.push(newUser);
-                await this.saveData();
-                
-                return { success: true, user: newUser };
-            },
-            
-            // Авторизация пользователя
-            loginUser: async function(username, password) {
-                const user = this.findUserByUsername(username);
-                
-                if (!user) {
-                    return { success: false, error: 'Пользователь не найден' };
-                }
-                
-                if (user.password !== password) {
-                    return { success: false, error: 'Неверный пароль' };
-                }
-                
-                // Обновляем статус
-                user.online = true;
-                user.status = 'online';
-                user.lastSeen = Date.now();
-                this.userStatuses[user.id] = {
-                    online: true,
-                    lastSeen: Date.now()
-                };
-                
-                await this.saveData();
-                this.currentUserId = user.id;
-                
-                return { success: true, user: user };
-            },
-            
-            // Выход из системы
-            logoutUser: async function(userId) {
-                const user = this.findUserById(userId);
-                if (user) {
-                    user.online = false;
-                    user.status = 'offline';
-                    user.lastSeen = Date.now();
-                    this.userStatuses[user.id] = {
-                        online: false,
-                        lastSeen: Date.now()
-                    };
-                    await this.saveData();
-                }
-                this.currentUserId = null;
-            },
-            
-            // Поиск пользователей (для добавления в контакты)
-            searchUsers: function(query, excludeUserId = null) {
-                if (!query || query.trim() === '') {
-                    return this.users.filter(user => 
-                        !excludeUserId || user.id !== excludeUserId
-                    );
-                }
-                
-                const searchQuery = query.toLowerCase().trim();
-                
-                return this.users.filter(user => {
-                    if (excludeUserId && user.id === excludeUserId) return false;
-                    
-                    return user.username.toLowerCase().includes(searchQuery) ||
-                           user.name.toLowerCase().includes(searchQuery) ||
-                           (user.email && user.email.toLowerCase().includes(searchQuery)) ||
-                           (user.bio && user.bio.toLowerCase().includes(searchQuery));
-                });
-            },
-            
-            // Получение всех пользователей кроме текущего
-            getAllUsersExcept: function(excludeUserId) {
-                return this.users.filter(user => user.id !== excludeUserId);
-            },
-            
-            // Обновление статуса "печатает"
-            setTypingStatus: function(userId, chatId, isTyping) {
-                // В реальном приложении здесь был бы WebSocket
-                console.log(`${userId} ${isTyping ? 'печатает' : 'закончил печатать'} в чате ${chatId}`);
-            },
-            
-            // Получение истории сообщений
-            getMessages: function(userId1, userId2) {
-                const chatId = this.getChatId(userId1, userId2);
-                return this.messages[chatId] || [];
-            },
-            
-            // Отправка сообщения
-            sendMessage: async function(fromUserId, toUserId, text) {
-                const chatId = this.getChatId(fromUserId, toUserId);
-                
-                if (!this.messages[chatId]) {
-                    this.messages[chatId] = [];
-                }
-                
-                const message = {
-                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    text: text,
-                    sender: fromUserId,
-                    receiver: toUserId,
-                    timestamp: Date.now(),
-                    time: this.formatTime(new Date()),
-                    status: 'sent', // sent, delivered, read
-                    outgoing: fromUserId === this.currentUserId
-                };
-                
-                this.messages[chatId].push(message);
-                
-                // Сохраняем локально
-                this.saveToLocalStorage();
-                
-                // Пытаемся сохранить в облако
-                if (this.isOnline) {
-                    await this.saveMessagesToCloud();
-                }
-                
-                return message;
-            },
-            
-            // Генерация ID чата
-            getChatId: function(userId1, userId2) {
-                return [userId1, userId2].sort().join('_');
-            },
-            
-            // Форматирование времени
-            formatTime: function(date) {
-                return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-            },
-            
-            // Форматирование даты последнего посещения
-            formatLastSeen: function(timestamp) {
-                if (!timestamp) return 'никогда';
-                
-                const now = Date.now();
-                const diff = now - timestamp;
-                
-                if (diff < 60000) return 'только что';
-                if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`;
-                if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`;
-                if (diff < 604800000) return `${Math.floor(diff / 86400000)} дн назад`;
-                
-                return new Date(timestamp).toLocaleDateString();
-            },
-            
-            // Сохранение сообщений в облако (упрощённая версия)
-            saveMessagesToCloud: async function() {
-                // В реальном приложении здесь была бы отдельная база для сообщений
-                // Сейчас сохраняем только пользователей и их статусы
-                await this.saveData();
-            },
-            
-            // Синхронизация с сервером
-            sync: async function() {
-                if (!this.isOnline) return false;
-                
-                try {
-                    await this.loadData();
-                    console.log('Синхронизация завершена');
-                    return true;
-                } catch (error) {
-                    console.error('Ошибка синхронизации:', error);
-                    return false;
-                }
-            }
-        };
+        // DOM элементы
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authContainer = document.getElementById('authContainer');
+        const mainPanel = document.getElementById('mainPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const currentUserAvatar = document.getElementById('currentUserAvatar');
+        const currentUsername = document.getElementById('currentUsername');
+        const searchUserInput = document.getElementById('searchUser');
+        const contactsList = document.getElementById('contactsList');
+        const chatUserName = document.getElementById('chatUserName');
+        const chatUserAvatar = document.getElementById('chatUserAvatar');
+        const chatUserStatus = document.getElementById('chatUserStatus');
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const voiceCallBtn = document.getElementById('voiceCallBtn');
+        const videoCallBtn = document.getElementById('videoCallBtn');
+        const callContainer = document.getElementById('callContainer');
+        const callContactName = document.getElementById('callContactName');
+        const callStatus = document.getElementById('callStatus');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const localVideo = document.getElementById('localVideo');
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+        const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+        const endCallBtn = document.getElementById('endCallBtn');
+        const acceptCallBtn = document.getElementById('acceptCallBtn');
+        const declineCallBtn = document.getElementById('declineCallBtn');
+        const incomingCallControls = document.getElementById('incomingCallControls');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const backToContacts = document.getElementById('backToContacts');
         
-        // ===== МЕНЕДЖЕР ЧАТОВ =====
-        const ChatManager = {
-            currentUser: null,
-            contacts: [],
-            currentChat: null,
-            messages: [],
-            typingUsers: {},
-            
-            // Инициализация
-            init: function(user) {
-                this.currentUser = user;
-                this.loadContacts();
-                this.loadChats();
-            },
-            
-            // Загрузка контактов
-            loadContacts: function() {
-                // Получаем всех пользователей кроме текущего
-                const allUsers = RealDatabase.getAllUsersExcept(this.currentUser.id);
-                
-                // Преобразуем в контакты с дополнительной информацией
-                this.contacts = allUsers.map(user => ({
-                    id: user.id,
-                    username: user.username,
-                    name: user.name,
-                    avatar: user.avatar,
-                    status: user.online ? 'online' : 'offline',
-                    lastSeen: RealDatabase.formatLastSeen(user.lastSeen),
-                    online: user.online,
-                    bio: user.bio,
-                    unread: this.getUnreadCount(user.id)
-                }));
-                
-                // Сохраняем в localStorage
-                this.saveContacts();
-            },
-            
-            // Загрузка чатов
-            loadChats: function() {
-                // В реальном приложении здесь бы загружались чаты из базы
-                console.log('Чаты загружены');
-            },
-            
-            // Сохранение контактов
-            saveContacts: function() {
-                if (!this.currentUser) return;
-                
-                try {
-                    localStorage.setItem(
-                        `skyMessageContacts_${this.currentUser.username}`,
-                        JSON.stringify(this.contacts)
-                    );
-                } catch (e) {
-                    console.error('Ошибка сохранения контактов:', e);
-                }
-            },
-            
-            // Получение количества непрочитанных
-            getUnreadCount: function(contactId) {
-                // В реальном приложении здесь бы считались непрочитанные сообщения
-                return 0;
-            },
-            
-            // Выбор чата
-            selectChat: function(contact) {
-                this.currentChat = contact;
-                this.messages = RealDatabase.getMessages(this.currentUser.id, contact.id);
-                
-                // Отмечаем сообщения как прочитанные
-                this.markAsRead(contact.id);
-                
-                return this.messages;
-            },
-            
-            // Отправка сообщения
-            sendMessage: async function(text) {
-                if (!this.currentChat || !text.trim()) return null;
-                
-                const message = await RealDatabase.sendMessage(
-                    this.currentUser.id,
-                    this.currentChat.id,
-                    text.trim()
-                );
-                
-                // Добавляем в локальный список сообщений
-                this.messages.push(message);
-                
-                // Обновляем статус "последнее сообщение" у контакта
-                this.updateLastMessage(message);
-                
-                return message;
-            },
-            
-            // Обновление последнего сообщения у контакта
-            updateLastMessage: function(message) {
-                const contact = this.contacts.find(c => c.id === this.currentChat.id);
-                if (contact) {
-                    contact.lastMessage = message.text;
-                    contact.lastMessageTime = message.time;
-                    this.saveContacts();
-                }
-            },
-            
-            // Отметка сообщений как прочитанных
-            markAsRead: function(contactId) {
-                // В реальном приложении здесь бы обновлялся статус в базе
-                console.log(`Сообщения от ${contactId} отмечены как прочитанные`);
-            },
-            
-            // Обновление статуса печатания
-            updateTypingStatus: function(contactId, isTyping) {
-                if (isTyping) {
-                    this.typingUsers[contactId] = Date.now();
-                } else {
-                    delete this.typingUsers[contactId];
-                }
-            },
-            
-            // Проверка, печатает ли пользователь
-            isTyping: function(contactId) {
-                return this.typingUsers[contactId] && 
-                       (Date.now() - this.typingUsers[contactId] < 5000);
-            },
-            
-            // Добавление контакта
-            addContact: function(user) {
-                // Проверяем, не добавлен ли уже
-                if (this.contacts.some(contact => contact.id === user.id)) {
-                    return false;
-                }
-                
-                const contact = {
-                    id: user.id,
-                    username: user.username,
-                    name: user.name,
-                    avatar: user.avatar,
-                    status: user.online ? 'online' : 'offline',
-                    lastSeen: RealDatabase.formatLastSeen(user.lastSeen),
-                    online: user.online,
-                    bio: user.bio,
-                    unread: 0
-                };
-                
-                this.contacts.push(contact);
-                this.saveContacts();
-                
-                return contact;
-            },
-            
-            // Очистка данных
-            clear: function() {
-                this.currentUser = null;
-                this.contacts = [];
-                this.currentChat = null;
-                this.messages = [];
-                this.typingUsers = {};
-            }
-        };
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', initApp);
         
-        // ===== ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ =====
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Инициализируем базу данных
-            await RealDatabase.init();
-            
-            // Элементы интерфейса
-            const authContainer = document.getElementById('authContainer');
-            const mainContainer = document.getElementById('mainContainer');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const logoutButton = document.getElementById('logoutButton');
-            const searchUserInput = document.getElementById('searchUser');
-            const contactsContainer = document.getElementById('contactsContainer');
-            const messagesContainer = document.getElementById('messagesContainer');
-            const messageInput = document.getElementById('messageInput');
-            const sendMessageButton = document.getElementById('sendMessageButton');
-            
-            // Переменные состояния
-            let refreshInterval = null;
-            let typingTimeout = null;
-            
-            // Проверяем авторизацию
-            const savedUser = localStorage.getItem('skyMessageCurrentUser');
+        async function initApp() {
+            // Проверяем, есть ли сохраненный пользователь
+            const savedUser = localStorage.getItem('skyMessageUser');
             if (savedUser) {
                 try {
-                    const user = JSON.parse(savedUser);
-                    const loginResult = await RealDatabase.loginUser(user.username, user.password);
-                    
-                    if (loginResult.success) {
-                        ChatManager.init(loginResult.user);
-                        showMainInterface();
-                    } else {
-                        showAuthInterface();
-                    }
-                } catch (e) {
-                    showAuthInterface();
+                    currentUser = JSON.parse(savedUser);
+                    await loginUser(currentUser.username, currentUser.password, true);
+                } catch (error) {
+                    localStorage.removeItem('skyMessageUser');
+                    showAuthForms();
                 }
             } else {
-                showAuthInterface();
+                showAuthForms();
             }
             
             // Настройка обработчиков событий
             setupEventListeners();
+        }
+        
+        function setupEventListeners() {
+            // Авторизация
+            loginBtn.addEventListener('click', handleLogin);
+            registerBtn.addEventListener('click', handleRegister);
+            showRegister.addEventListener('click', () => toggleAuthForms('register'));
+            showLogin.addEventListener('click', () => toggleAuthForms('login'));
+            logoutBtn.addEventListener('click', handleLogout);
             
-            function setupEventListeners() {
-                // Переключение между формой входа и регистрации
-                document.getElementById('toggleLink').addEventListener('click', toggleAuthForm);
-                
-                // Форма входа
-                loginForm.addEventListener('submit', async function(e) {
+            // Поиск пользователей
+            searchUserInput.addEventListener('input', searchUsers);
+            
+            // Сообщения
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    await loginUser();
-                });
-                
-                // Форма регистрации
-                registerForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    await registerUser();
-                });
-                
-                // Выход из системы
-                logoutButton.addEventListener('click', logoutUser);
-                
-                // Поиск пользователей
-                searchUserInput.addEventListener('input', function() {
-                    searchUsers(this.value);
-                });
-                
-                // Отправка сообщения
-                sendMessageButton.addEventListener('click', sendMessage);
-                messageInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-                
-                // Отслеживание печатания
-                messageInput.addEventListener('input', function() {
-                    if (ChatManager.currentChat) {
-                        clearTimeout(typingTimeout);
-                        ChatManager.updateTypingStatus(ChatManager.currentChat.id, true);
-                        
-                        typingTimeout = setTimeout(() => {
-                            ChatManager.updateTypingStatus(ChatManager.currentChat.id, false);
-                        }, 1000);
-                    }
-                });
-                
-                // Автоподстройка высоты текстового поля
-                messageInput.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = (this.scrollHeight) + 'px';
-                });
+                    sendMessage();
+                }
+            });
+            sendMessageBtn.addEventListener('click', sendMessage);
+            
+            // Звонки
+            voiceCallBtn.addEventListener('click', () => initiateCall(false));
+            videoCallBtn.addEventListener('click', () => initiateCall(true));
+            endCallBtn.addEventListener('click', endCall);
+            acceptCallBtn.addEventListener('click', acceptCall);
+            declineCallBtn.addEventListener('click', declineCall);
+            toggleVideoBtn.addEventListener('click', toggleVideo);
+            toggleAudioBtn.addEventListener('click', toggleAudio);
+            
+            // Навигация
+            backToContacts.addEventListener('click', () => {
+                document.querySelector('.chat-panel').classList.remove('active');
+            });
+            
+            // Для мобильных устройств - открытие чата при выборе контакта
+            contactsList.addEventListener('click', (e) => {
+                const contactItem = e.target.closest('.contact-item');
+                if (contactItem && window.innerWidth <= 768) {
+                    document.querySelector('.chat-panel').classList.add('active');
+                }
+            });
+        }
+        
+        function toggleAuthForms(form) {
+            if (form === 'register') {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            } else {
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            }
+        }
+        
+        function showAuthForms() {
+            authContainer.classList.remove('hidden');
+            mainPanel.classList.add('hidden');
+            logoutBtn.style.display = 'none';
+            currentUsername.textContent = 'Гость';
+            currentUserAvatar.textContent = 'U';
+        }
+        
+        function showMainPanel() {
+            authContainer.classList.add('hidden');
+            mainPanel.classList.remove('hidden');
+            logoutBtn.style.display = 'block';
+            currentUsername.textContent = currentUser.username;
+            currentUserAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
+            
+            // Загружаем контакты
+            loadContacts();
+            
+            // Подключаемся к WebSocket серверу
+            connectWebSocket();
+        }
+        
+        async function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!username || !password) {
+                showNotification('Введите никнейм и пароль', 'error');
+                return;
             }
             
-            function toggleAuthForm() {
-                const isLoginVisible = !loginForm.classList.contains('hidden');
+            await loginUser(username, password, false);
+        }
+        
+        async function loginUser(username, password, isAutoLogin = false) {
+            try {
+                const users = await fetchFromJSONBin('users');
+                const user = users.find(u => u.username === username && u.password === password);
                 
-                if (isLoginVisible) {
-                    loginForm.classList.add('hidden');
-                    registerForm.classList.remove('hidden');
-                    document.getElementById('formTitle').textContent = 'Создайте аккаунт';
-                    document.getElementById('formSubtitle').textContent = 'Зарегистрируйтесь, чтобы начать пользоваться мессенджером';
-                    document.getElementById('toggleText').textContent = 'Уже есть аккаунт?';
-                    document.getElementById('toggleLink').textContent = 'Войти';
+                if (user) {
+                    currentUser = {
+                        id: user.id,
+                        username: user.username,
+                        password: user.password // В реальном приложении хранить пароль небезопасно
+                    };
+                    
+                    // Сохраняем пользователя в localStorage
+                    localStorage.setItem('skyMessageUser', JSON.stringify(currentUser));
+                    
+                    if (!isAutoLogin) {
+                        showNotification('Успешный вход!', 'success');
+                        document.getElementById('loginUsername').value = '';
+                        document.getElementById('loginPassword').value = '';
+                    }
+                    
+                    showMainPanel();
+                    return true;
                 } else {
-                    registerForm.classList.remove('hidden');
-                    loginForm.classList.remove('hidden');
-                    registerForm.classList.add('hidden');
-                    document.getElementById('formTitle').textContent = 'Войдите в аккаунт';
-                    document.getElementById('formSubtitle').textContent = 'Введите свои данные для входа в мессенджер';
-                    document.getElementById('toggleText').textContent = 'Нет аккаунта?';
-                    document.getElementById('toggleLink').textContent = 'Зарегистрироваться';
-                }
-                
-                // Скрываем ошибки
-                document.querySelectorAll('.error-message').forEach(el => {
-                    el.style.display = 'none';
-                });
-            }
-            
-            async function loginUser() {
-                const username = document.getElementById('loginUsername').value.trim();
-                const password = document.getElementById('loginPassword').value.trim();
-                const loginButton = document.getElementById('loginButton');
-                
-                hideError('loginUsernameError');
-                hideError('loginPasswordError');
-                
-                if (!username || !password) {
-                    showError('loginUsernameError', 'Заполните все поля');
-                    return;
-                }
-                
-                // Показываем индикатор загрузки
-                const originalText = loginButton.innerHTML;
-                loginButton.innerHTML = '<div class="loader"></div>';
-                loginButton.disabled = true;
-                
-                try {
-                    const loginResult = await RealDatabase.loginUser(username, password);
-                    
-                    if (loginResult.success) {
-                        // Сохраняем пользователя
-                        localStorage.setItem('skyMessageCurrentUser', JSON.stringify({
-                            username: username,
-                            password: password
-                        }));
-                        
-                        // Инициализируем менеджер чатов
-                        ChatManager.init(loginResult.user);
-                        
-                        showMainInterface();
-                        showNotification('Добро пожаловать в SkyMessage!', `Рады видеть вас, ${loginResult.user.name}!`);
-                    } else {
-                        showError('loginUsernameError', loginResult.error);
+                    if (!isAutoLogin) {
+                        showNotification('Неверный никнейм или пароль', 'error');
                     }
-                } catch (error) {
-                    showError('loginUsernameError', 'Ошибка входа. Попробуйте снова.');
-                } finally {
-                    // Восстанавливаем кнопку
-                    loginButton.innerHTML = originalText;
-                    loginButton.disabled = false;
+                    return false;
                 }
+            } catch (error) {
+                console.error('Ошибка при входе:', error);
+                showNotification('Ошибка соединения с сервером', 'error');
+                return false;
+            }
+        }
+        
+        async function handleRegister() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
+            
+            if (!username || !password || !confirmPassword) {
+                showNotification('Заполните все поля', 'error');
+                return;
             }
             
-            async function registerUser() {
-                const username = document.getElementById('registerUsername').value.trim();
-                const password = document.getElementById('registerPassword').value.trim();
-                const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
-                const registerButton = document.getElementById('registerButton');
+            if (password !== confirmPassword) {
+                showNotification('Пароли не совпадают', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Пароль должен быть не менее 6 символов', 'error');
+                return;
+            }
+            
+            try {
+                const users = await fetchFromJSONBin('users');
                 
-                hideError('registerUsernameError');
-                hideError('registerPasswordError');
-                hideError('registerConfirmPasswordError');
-                
-                // Валидация
-                if (!username || !password || !confirmPassword) {
-                    showError('registerUsernameError', 'Заполните все поля');
+                // Проверяем, существует ли пользователь
+                const userExists = users.some(u => u.username === username);
+                if (userExists) {
+                    showNotification('Пользователь с таким никнеймом уже существует', 'error');
                     return;
                 }
                 
-                if (username.length < 3) {
-                    showError('registerUsernameError', 'Имя пользователя должно содержать минимум 3 символа');
-                    return;
-                }
+                // Создаем нового пользователя
+                const newUser = {
+                    id: generateId(),
+                    username: username,
+                    password: password,
+                    registeredAt: new Date().toISOString()
+                };
                 
-                if (RealDatabase.userExists(username)) {
-                    showError('registerUsernameError', 'Этот никнейм уже занят');
-                    return;
-                }
+                users.push(newUser);
+                await updateJSONBin('users', users);
                 
-                if (password.length < 6) {
-                    showError('registerPasswordError', 'Пароль должен содержать минимум 6 символов');
-                    return;
-                }
+                showNotification('Регистрация успешна! Теперь вы можете войти', 'success');
                 
-                if (password !== confirmPassword) {
-                    showError('registerConfirmPasswordError', 'Пароли не совпадают');
-                    return;
-                }
+                // Очищаем форму и переключаемся на вход
+                document.getElementById('registerUsername').value = '';
+                document.getElementById('registerPassword').value = '';
+                document.getElementById('registerConfirmPassword').value = '';
+                toggleAuthForms('login');
                 
-                // Показываем индикатор загрузки
-                const originalText = registerButton.innerHTML;
-                registerButton.innerHTML = '<div class="loader"></div>';
-                registerButton.disabled = true;
-                
-                try {
-                    const registerResult = await RealDatabase.registerUser({
-                        username: username,
-                        name: username.charAt(0).toUpperCase() + username.slice(1),
-                        avatar: username.charAt(0).toUpperCase(),
-                        password: password,
-                        email: username + '@skymessage.com',
-                        bio: 'Новый пользователь SkyMessage'
-                    });
-                    
-                    if (registerResult.success) {
-                        // Автоматически входим
-                        localStorage.setItem('skyMessageCurrentUser', JSON.stringify({
-                            username: username,
-                            password: password
-                        }));
-                        
-                        ChatManager.init(registerResult.user);
-                        
-                        showMainInterface();
-                        showNotification('Регистрация успешна!', `Добро пожаловать в SkyMessage, ${registerResult.user.name}!`);
-                    } else {
-                        showError('registerUsernameError', registerResult.error);
-                    }
-                } catch (error) {
-                    showError('registerUsernameError', 'Ошибка регистрации. Попробуйте снова.');
-                } finally {
-                    // Восстанавливаем кнопку
-                    registerButton.innerHTML = originalText;
-                    registerButton.disabled = false;
-                }
+            } catch (error) {
+                console.error('Ошибка при регистрации:', error);
+                showNotification('Ошибка при регистрации', 'error');
+            }
+        }
+        
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('skyMessageUser');
+            
+            if (socket) {
+                socket.close();
+                socket = null;
             }
             
-            async function logoutUser() {
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                    refreshInterval = null;
-                }
-                
-                // Выходим из системы
-                await RealDatabase.logoutUser(ChatManager.currentUser?.id);
-                
-                // Очищаем данные
-                ChatManager.clear();
-                localStorage.removeItem('skyMessageCurrentUser');
-                
-                showAuthInterface();
-                
-                // Сбрасываем формы
-                loginForm.reset();
-                registerForm.reset();
-                
-                if (!loginForm.classList.contains('hidden')) {
-                    toggleAuthForm();
-                }
+            showAuthForms();
+            showNotification('Вы вышли из системы', 'info');
+        }
+        
+        async function searchUsers() {
+            const query = searchUserInput.value.trim().toLowerCase();
+            
+            if (!query) {
+                loadContacts();
+                return;
             }
             
-            function showAuthInterface() {
-                authContainer.style.display = 'flex';
-                mainContainer.style.display = 'none';
-                document.getElementById('searchError').style.display = 'none';
+            try {
+                const users = await fetchFromJSONBin('users');
+                const filteredUsers = users.filter(user => 
+                    user.username.toLowerCase().includes(query) && 
+                    user.id !== currentUser.id
+                );
                 
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                    refreshInterval = null;
-                }
+                displayContacts(filteredUsers);
+            } catch (error) {
+                console.error('Ошибка при поиске пользователей:', error);
+            }
+        }
+        
+        async function loadContacts() {
+            try {
+                const users = await fetchFromJSONBin('users');
+                // Исключаем текущего пользователя
+                const otherUsers = users.filter(user => user.id !== currentUser.id);
+                displayContacts(otherUsers);
+            } catch (error) {
+                console.error('Ошибка при загрузке контактов:', error);
+                contactsList.innerHTML = '<div style="text-align: center; padding: 30px; color: #777;">Ошибка загрузки контактов</div>';
+            }
+        }
+        
+        function displayContacts(users) {
+            if (users.length === 0) {
+                contactsList.innerHTML = '<div style="text-align: center; padding: 30px; color: #777;">Пользователи не найдены</div>';
+                return;
             }
             
-            function showMainInterface() {
-                authContainer.style.display = 'none';
-                mainContainer.style.display = 'flex';
-                
-                // Обновляем информацию о пользователе
-                document.getElementById('currentUserName').textContent = ChatManager.currentUser.name;
-                document.getElementById('currentUserAvatar').textContent = ChatManager.currentUser.avatar;
-                document.getElementById('currentUserStatus').textContent = 'online';
-                
-                // Рендерим контакты
-                renderContacts();
-                resetChat();
-                
-                // Сбрасываем поиск
-                searchUserInput.value = '';
-                document.getElementById('searchError').style.display = 'none';
-                
-                console.log('Пользователь вошел:', ChatManager.currentUser.username);
-                console.log('Контактов:', ChatManager.contacts.length);
-                
-                // Запускаем автообновление
-                startAutoRefresh();
-            }
+            contactsList.innerHTML = '';
             
-            function startAutoRefresh() {
-                if (refreshInterval) {
-                    clearInterval(refreshInterval);
-                }
+            users.forEach(user => {
+                const contactItem = document.createElement('div');
+                contactItem.className = 'contact-item';
+                contactItem.dataset.userId = user.id;
                 
-                refreshInterval = setInterval(async () => {
-                    // Синхронизируем с сервером
-                    if (RealDatabase.isOnline) {
-                        await RealDatabase.sync();
-                    }
-                    
-                    // Обновляем статусы контактов
-                    updateContactStatuses();
-                    
-                    // Обновляем отображение
-                    if (searchUserInput.value.trim() !== '') {
-                        searchUsers(searchUserInput.value);
-                    } else {
-                        renderContacts();
-                    }
-                    
-                    // Обновляем статус текущего чата
-                    if (ChatManager.currentChat) {
-                        const contact = ChatManager.contacts.find(c => c.id === ChatManager.currentChat.id);
-                        if (contact) {
-                            document.getElementById('chatUserStatus').textContent = 
-                                contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
-                            
-                            // Показываем индикатор печатания
-                            if (ChatManager.isTyping(contact.id)) {
-                                showTypingIndicator(contact.name);
-                            }
-                        }
-                    }
-                }, 5000); // Обновляем каждые 5 секунд
-            }
-            
-            function updateContactStatuses() {
-                ChatManager.contacts.forEach(contact => {
-                    const user = RealDatabase.findUserById(contact.id);
-                    if (user) {
-                        contact.status = user.online ? 'online' : 'offline';
-                        contact.lastSeen = RealDatabase.formatLastSeen(user.lastSeen);
-                        contact.online = user.online;
-                    }
-                });
-                ChatManager.saveContacts();
-            }
-            
-            function searchUsers(query) {
-                const searchError = document.getElementById('searchError');
-                searchError.style.display = 'none';
+                // Получаем последнее сообщение с этим пользователем
+                const lastMessage = getLastMessageWithUser(user.id);
                 
-                if (!query || query.trim() === '') {
-                    renderContacts();
-                    return;
-                }
-                
-                const searchResults = RealDatabase.searchUsers(query, ChatManager.currentUser?.id);
-                
-                if (searchResults.length === 0) {
-                    contactsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 30px; color: var(--gray-color);">
-                            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                            <p>Пользователи не найдены</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">Попробуйте изменить поисковый запрос</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                renderSearchResults(searchResults);
-            }
-            
-            function renderContacts() {
-                contactsContainer.innerHTML = '';
-                
-                if (ChatManager.contacts.length === 0) {
-                    contactsContainer.innerHTML = `
-                        <div style="text-align: center; padding: 30px; color: var(--gray-color);">
-                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                            <p>Контакты не найдены</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">Используйте поиск, чтобы найти других пользователей</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                ChatManager.contacts.forEach(contact => {
-                    const contactElement = createContactElement(contact, true);
-                    contactsContainer.appendChild(contactElement);
-                });
-            }
-            
-            function renderSearchResults(results) {
-                contactsContainer.innerHTML = '';
-                
-                results.forEach(user => {
-                    const isContact = ChatManager.contacts.some(contact => contact.id === user.id);
-                    const contactElement = createContactElement(user, isContact);
-                    contactsContainer.appendChild(contactElement);
-                });
-            }
-            
-            function createContactElement(user, isContact) {
-                const contactElement = document.createElement('div');
-                contactElement.className = 'contact';
-                contactElement.dataset.userId = user.id;
-                
-                const statusClass = user.online ? 'online' : '';
-                const lastSeenText = user.online ? 'в сети' : `был(а) ${RealDatabase.formatLastSeen(user.lastSeen)}`;
-                
-                contactElement.innerHTML = `
-                    <div class="contact-avatar">${user.avatar}</div>
+                contactItem.innerHTML = `
+                    <div class="contact-avatar">${user.username.charAt(0).toUpperCase()}</div>
                     <div class="contact-info">
-                        <h4>${user.name} <span style="color: var(--gray-color); font-weight: normal; font-size: 0.8rem;">@${user.username}</span></h4>
-                        <p>${lastSeenText}</p>
-                        ${user.bio ? `<p style="font-size: 0.8rem; color: var(--gray-color); margin-top: 2px;">${user.bio.substring(0, 30)}${user.bio.length > 30 ? '...' : ''}</p>` : ''}
-                    </div>
-                    <div class="contact-status ${statusClass}"></div>
-                `;
-                
-                if (!isContact) {
-                    const addButton = document.createElement('button');
-                    addButton.className = 'btn btn-primary btn-small add-contact-btn';
-                    addButton.innerHTML = '<i class="fas fa-user-plus"></i>';
-                    addButton.style.marginLeft = '10px';
-                    addButton.title = 'Добавить в контакты';
-                    contactElement.appendChild(addButton);
-                    
-                    addButton.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        addToContacts(user);
-                    });
-                }
-                
-                contactElement.addEventListener('click', function(e) {
-                    if (!e.target.closest('.add-contact-btn')) {
-                        if (isContact) {
-                            const contact = ChatManager.contacts.find(c => c.id === user.id);
-                            if (contact) selectContact(contact);
-                        } else {
-                            addToContacts(user);
-                        }
-                    }
-                });
-                
-                return contactElement;
-            }
-            
-            function addToContacts(user) {
-                const contact = ChatManager.addContact(user);
-                if (!contact) {
-                    showNotification('Контакт уже добавлен', `${user.name} уже есть в ваших контактах`);
-                    return;
-                }
-                
-                renderContacts();
-                showNotification('Контакт добавлен', `${user.name} добавлен(а) в ваши контакты`);
-                selectContact(contact);
-                searchUserInput.value = '';
-            }
-            
-            function selectContact(contact) {
-                // Убираем выделение со всех контактов
-                document.querySelectorAll('.contact').forEach(el => {
-                    el.classList.remove('active');
-                });
-                
-                // Выделяем выбранный контакт
-                const contactElement = document.querySelector(`.contact[data-user-id="${contact.id}"]`);
-                if (contactElement) {
-                    contactElement.classList.add('active');
-                }
-                
-                // Загружаем сообщения
-                const messages = ChatManager.selectChat(contact);
-                
-                // Обновляем интерфейс чата
-                document.getElementById('chatUserName').textContent = contact.name;
-                document.getElementById('chatUserAvatar').textContent = contact.avatar;
-                document.getElementById('chatUserStatus').textContent = contact.online ? 'в сети' : `был(а) ${contact.lastSeen}`;
-                
-                // Активируем поле ввода
-                messageInput.disabled = false;
-                sendMessageButton.disabled = false;
-                document.getElementById('voiceCallButton').disabled = false;
-                document.getElementById('videoCallButton').disabled = false;
-                
-                // Рендерим сообщения
-                renderMessages(messages);
-                
-                // Сбрасываем поиск
-                searchUserInput.value = '';
-                document.getElementById('searchError').style.display = 'none';
-                
-                if (searchUserInput.value.trim() === '') {
-                    renderContacts();
-                }
-            }
-            
-            function resetChat() {
-                document.getElementById('chatUserName').textContent = 'Выберите чат';
-                document.getElementById('chatUserAvatar').textContent = 'U';
-                document.getElementById('chatUserStatus').textContent = 'начните общение';
-                
-                messageInput.disabled = true;
-                sendMessageButton.disabled = true;
-                document.getElementById('voiceCallButton').disabled = true;
-                document.getElementById('videoCallButton').disabled = true;
-                
-                messagesContainer.innerHTML = `
-                    <div style="text-align: center; margin-top: 50px; color: var(--gray-color);">
-                        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                        <p>Выберите чат для начала общения</p>
-                        <p style="font-size: 0.9rem; margin-top: 10px;">Используйте поиск, чтобы найти пользователей</p>
+                        <div class="contact-name">${user.username}</div>
+                        <div class="contact-last-msg">${lastMessage || 'Нет сообщений'}</div>
                     </div>
                 `;
                 
-                document.querySelectorAll('.contact').forEach(el => {
-                    el.classList.remove('active');
-                });
-                
-                ChatManager.currentChat = null;
+                contactItem.addEventListener('click', () => selectUser(user));
+                contactsList.appendChild(contactItem);
+            });
+        }
+        
+        function getLastMessageWithUser(userId) {
+            const chatId = getChatId(userId);
+            if (messages[chatId] && messages[chatId].length > 0) {
+                const lastMsg = messages[chatId][messages[chatId].length - 1];
+                return lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + '...' : lastMsg.text;
             }
+            return null;
+        }
+        
+        function getChatId(userId) {
+            const ids = [currentUser.id, userId].sort();
+            return `${ids[0]}_${ids[1]}`;
+        }
+        
+        function selectUser(user) {
+            selectedUser = user;
             
-            function renderMessages(messages) {
-                messagesContainer.innerHTML = '';
-                
-                if (messages.length === 0) {
-                    messagesContainer.innerHTML = `
-                        <div style="text-align: center; margin-top: 50px; color: var(--gray-color);">
-                            <i class="fas fa-comment" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                            <p>Начните общение с этим пользователем</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">Отправьте первое сообщение!</p>
-                        </div>
-                    `;
-                    return;
+            // Обновляем UI
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.userId === user.id) {
+                    item.classList.add('active');
                 }
-                
-                messages.forEach(message => {
-                    const messageElement = document.createElement('div');
-                    messageElement.className = `message ${message.outgoing ? 'message-outgoing' : 'message-incoming'}`;
-                    
-                    const statusIcon = message.outgoing ? 
-                        `<i class="fas fa-check${message.status === 'read' ? '-double' : ''} message-status ${message.status}"></i>` : '';
-                    
-                    messageElement.innerHTML = `
-                        <div class="message-text">${message.text}</div>
-                        <div class="message-time">${message.time} ${statusIcon}</div>
-                    `;
-                    
-                    messagesContainer.appendChild(messageElement);
-                });
-                
-                // Прокручиваем вниз
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+            });
             
-            function showTypingIndicator(userName) {
-                // Удаляем старый индикатор
-                const oldIndicator = document.querySelector('.typing-indicator');
-                if (oldIndicator) oldIndicator.remove();
-                
-                // Создаем новый индикатор
-                const indicator = document.createElement('div');
-                indicator.className = 'typing-indicator';
-                indicator.innerHTML = `
-                    <span>${userName} печатает</span>
-                    <div class="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+            chatUserName.textContent = user.username;
+            chatUserAvatar.textContent = user.username.charAt(0).toUpperCase();
+            chatUserStatus.textContent = 'online'; // В реальном приложении нужно получать статус из WebSocket
+            
+            // Активируем поле ввода сообщения
+            messageInput.disabled = false;
+            sendMessageBtn.disabled = false;
+            voiceCallBtn.disabled = false;
+            videoCallBtn.disabled = false;
+            
+            // Загружаем историю сообщений
+            loadMessages(user.id);
+        }
+        
+        async function loadMessages(userId) {
+            const chatId = getChatId(userId);
+            
+            try {
+                const allMessages = await fetchFromJSONBin('messages');
+                messages[chatId] = allMessages.filter(msg => msg.chatId === chatId);
+                displayMessages();
+            } catch (error) {
+                console.error('Ошибка при загрузке сообщений:', error);
+                messages[chatId] = [];
+                displayMessages();
+            }
+        }
+        
+        function displayMessages() {
+            if (!selectedUser) return;
+            
+            const chatId = getChatId(selectedUser.id);
+            const chatMessagesArray = messages[chatId] || [];
+            
+            chatMessages.innerHTML = '';
+            
+            if (chatMessagesArray.length === 0) {
+                chatMessages.innerHTML = `
+                    <div style="text-align: center; margin-top: 50px; color: #999;">
+                        <i class="fas fa-comment-dots fa-3x" style="margin-bottom: 20px;"></i>
+                        <p>Начните общение с ${selectedUser.username}</p>
                     </div>
                 `;
-                
-                messagesContainer.appendChild(indicator);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                return;
             }
             
-            async function sendMessage() {
-                const text = messageInput.value.trim();
+            chatMessagesArray.forEach(message => {
+                const isOutgoing = message.senderId === currentUser.id;
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${isOutgoing ? 'message-outgoing' : 'message-incoming'}`;
                 
-                if (!text || !ChatManager.currentChat) return;
+                const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
-                // Отправляем сообщение
-                const message = await ChatManager.sendMessage(text);
-                
-                if (message) {
-                    // Обновляем отображение
-                    renderMessages(ChatManager.messages);
-                    
-                    // Очищаем поле ввода
-                    messageInput.value = '';
-                    messageInput.style.height = 'auto';
-                    
-                    // Показываем уведомление
-                    showNotification('Сообщение отправлено', `Сообщение отправлено ${ChatManager.currentChat.name}`);
-                }
-            }
-            
-            // Вспомогательные функции
-            function showError(elementId, message) {
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.textContent = message;
-                    element.style.display = 'block';
-                }
-            }
-            
-            function hideError(elementId) {
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.style.display = 'none';
-                }
-            }
-            
-            function showNotification(title, text) {
-                // Создаем уведомление
-                const notification = document.createElement('div');
-                notification.className = 'notification message show';
-                notification.innerHTML = `
-                    <div class="notification-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h4>${title}</h4>
-                        <p>${text}</p>
-                    </div>
+                messageElement.innerHTML = `
+                    ${!isOutgoing ? `<div class="message-sender">${selectedUser.username}</div>` : ''}
+                    <div>${message.text}</div>
+                    <div class="message-time">${time}</div>
                 `;
                 
-                document.body.appendChild(notification);
-                
-                // Удаляем через 5 секунд
-                setTimeout(() => {
-                    notification.remove();
-                }, 5000);
+                chatMessages.appendChild(messageElement);
+            });
+            
+            // Прокручиваем вниз
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            if (!selectedUser || !messageInput.value.trim()) return;
+            
+            const text = messageInput.value.trim();
+            const chatId = getChatId(selectedUser.id);
+            const message = {
+                id: generateId(),
+                chatId: chatId,
+                senderId: currentUser.id,
+                receiverId: selectedUser.id,
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Добавляем сообщение локально
+            if (!messages[chatId]) messages[chatId] = [];
+            messages[chatId].push(message);
+            
+            // Сохраняем в JSONBin
+            try {
+                const allMessages = await fetchFromJSONBin('messages');
+                allMessages.push(message);
+                await updateJSONBin('messages', allMessages);
+            } catch (error) {
+                console.error('Ошибка при сохранении сообщения:', error);
             }
             
-            // Дебаг информация
-            console.log('=== SkyMessage Real Version ===');
-            console.log('Теперь это РЕАЛЬНЫЙ мессенджер:');
-            console.log('1. Пользователи сохраняются в JSONBin.io');
-            console.log('2. Сообщения сохраняются локально и синхронизируются');
-            console.log('3. НЕТ авто-ответчиков - реальные пользователи');
-            console.log('4. Все данные сохраняются между сессиями');
-            console.log('=== Тестовые пользователи ===');
-            console.log('alex_sky / password123');
-            console.log('maria_chat / password123');
-            console.log('max_talk / password123');
-            console.log('anna_web / password123');
-            console.log('dmitry_conn / password123');
+            // Отправляем через WebSocket
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'message',
+                    data: message
+                }));
+            }
             
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                    if (confirm('Очистить ВСЕ данные приложения?')) {
-                        localStorage.clear();
-                        location.reload();
+            // Обновляем UI
+            displayMessages();
+            messageInput.value = '';
+            
+            // Обновляем последнее сообщение в контактах
+            updateLastMessageInContacts(selectedUser.id, text);
+        }
+        
+        function updateLastMessageInContacts(userId, text) {
+            const contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach(item => {
+                if (item.dataset.userId === userId) {
+                    const lastMsgElement = item.querySelector('.contact-last-msg');
+                    if (lastMsgElement) {
+                        lastMsgElement.textContent = text.length > 30 ? text.substring(0, 30) + '...' : text;
                     }
                 }
             });
-        });
+        }
+        
+        function connectWebSocket() {
+            // В реальном приложении нужно подключиться к вашему WebSocket серверу
+            // Для демонстрации эмулируем WebSocket соединение
+            
+            // Эмуляция получения сообщений от других пользователей
+            setInterval(() => {
+                if (currentUser && Math.random() > 0.7) {
+                    // Эмуляция входящего сообщения
+                    const users = ['user1', 'user2', 'user3', 'user4'].filter(u => u !== currentUser.username);
+                    if (users.length > 0) {
+                        const randomUser = users[Math.floor(Math.random() * users.length)];
+                        const message = {
+                            id: generateId(),
+                            senderId: 'other',
+                            receiverId: currentUser.id,
+                            text: `Привет от ${randomUser}! Как дела?`,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        // Если выбран пользователь, который отправил сообщение, обновляем чат
+                        if (selectedUser && selectedUser.username === randomUser) {
+                            const chatId = getChatId(selectedUser.id);
+                            if (!messages[chatId]) messages[chatId] = [];
+                            messages[chatId].push(message);
+                            displayMessages();
+                            
+                            // Показываем уведомление
+                            showNotification(`Новое сообщение от ${randomUser}`, 'info');
+                        }
+                    }
+                }
+            }, 15000); // Каждые 15 секунд
+        }
+        
+        // Функции для звонков
+        function initiateCall(withVideo = true) {
+            if (!selectedUser || callInProgress) return;
+            
+            isCaller = true;
+            currentCallId = generateId();
+            callInProgress = true;
+            callContactName.textContent = selectedUser.username;
+            callStatus.textContent = 'Звонок...';
+            incomingCallControls.style.display = 'none';
+            callContainer.style.display = 'flex';
+            
+            // Инициируем звонок
+            startLocalStream(withVideo).then(() => {
+                // В реальном приложении нужно отправить сигнал вызова через WebSocket
+                showNotification(`Инициирован ${withVideo ? 'видео' : 'голосовой'} звонок с ${selectedUser.username}`, 'info');
+                
+                // Эмуляция принятия звонка через 3 секунды
+                setTimeout(() => {
+                    if (callInProgress) {
+                        callStatus.textContent = 'Соединение установлено';
+                        setupPeerConnection();
+                    }
+                }, 3000);
+            }).catch(error => {
+                console.error('Ошибка при получении медиапотока:', error);
+                showNotification('Не удалось получить доступ к камере/микрофону', 'error');
+                endCall();
+            });
+        }
+        
+        async function startLocalStream(withVideo = true) {
+            const constraints = {
+                audio: true,
+                video: withVideo ? {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } : false
+            };
+            
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            localVideo.srcObject = localStream;
+            
+            // Обновляем иконки кнопок
+            toggleVideoBtn.innerHTML = withVideo ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
+            toggleAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        }
+        
+        function setupPeerConnection() {
+            // В реальном приложении нужно создать RTCPeerConnection
+            // и настроить обмен ICE кандидатами через WebSocket
+            
+            // Для демонстрации просто показываем видео
+            if (localStream) {
+                localVideo.srcObject = localStream;
+            }
+            
+            // Эмулируем удаленное видео через 2 секунды
+            setTimeout(() => {
+                if (callInProgress) {
+                    // В реальном приложении здесь будет remoteVideo.srcObject = remoteStream
+                    remoteVideo.style.backgroundColor = '#555';
+                    callStatus.textContent = 'Соединение установлено';
+                }
+            }, 2000);
+        }
+        
+        function endCall() {
+            callInProgress = false;
+            callContainer.style.display = 'none';
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+                localVideo.srcObject = null;
+            }
+            
+            if (remoteVideo.srcObject) {
+                remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+                remoteVideo.srcObject = null;
+            }
+            
+            remoteVideo.style.backgroundColor = '#333';
+            
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            
+            showNotification('Звонок завершен', 'info');
+        }
+        
+        function acceptCall() {
+            callStatus.textContent = 'Соединение устанавливается...';
+            incomingCallControls.style.display = 'none';
+            isCaller = false;
+            
+            // В реальном приложении нужно отправить сигнал принятия звонка через WebSocket
+            startLocalStream(true).then(() => {
+                setupPeerConnection();
+            }).catch(error => {
+                console.error('Ошибка при получении медиапотока:', error);
+                showNotification('Не удалось получить доступ к камере/микрофону', 'error');
+                endCall();
+            });
+        }
+        
+        function declineCall() {
+            callInProgress = false;
+            callContainer.style.display = 'none';
+            showNotification('Вы отклонили звонок', 'info');
+        }
+        
+        function toggleVideo() {
+            if (!localStream) return;
+            
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                toggleVideoBtn.innerHTML = videoTrack.enabled ? 
+                    '<i class="fas fa-video-slash"></i>' : 
+                    '<i class="fas fa-video"></i>';
+            }
+        }
+        
+        function toggleAudio() {
+            if (!localStream) return;
+            
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                toggleAudioBtn.innerHTML = audioTrack.enabled ? 
+                    '<i class="fas fa-microphone-slash"></i>' : 
+                    '<i class="fas fa-microphone"></i>';
+            }
+        }
+        
+        // Эмуляция входящего звонка (для демонстрации)
+        function simulateIncomingCall() {
+            if (callInProgress || !currentUser) return;
+            
+            const users = ['Анна', 'Иван', 'Мария', 'Алексей'];
+            const randomUser = users[Math.floor(Math.random() * users.length)];
+            
+            callInProgress = true;
+            currentCallId = generateId();
+            callContactName.textContent = randomUser;
+            callStatus.textContent = 'Входящий звонок...';
+            incomingCallControls.style.display = 'flex';
+            callContainer.style.display = 'flex';
+            
+            showNotification(`Входящий звонок от ${randomUser}`, 'info');
+        }
+        
+        // Утилиты для работы с JSONBin.io
+        async function fetchFromJSONBin(binName) {
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSON_BIN_ID}/latest`, {
+                    headers: {
+                        'X-Master-Key': JSON_BIN_MASTER_KEY,
+                        'X-Access-Key': JSON_BIN_ACCESS_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const record = data.record;
+                
+                // Если бина не существует, создаем его
+                if (!record[binName]) {
+                    record[binName] = binName === 'users' ? [] : [];
+                    await updateJSONBin(binName, record[binName]);
+                }
+                
+                return record[binName];
+            } catch (error) {
+                console.error(`Ошибка при загрузке данных из ${binName}:`, error);
+                
+                // Возвращаем пустой массив в случае ошибки
+                return binName === 'users' ? [] : [];
+            }
+        }
+        
+        async function updateJSONBin(binName, data) {
+            try {
+                // Сначала получаем текущие данные
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSON_BIN_ID}`, {
+                    headers: {
+                        'X-Master-Key': JSON_BIN_MASTER_KEY,
+                        'X-Access-Key': JSON_BIN_ACCESS_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                let currentData = {};
+                if (response.ok) {
+                    const responseData = await response.json();
+                    currentData = responseData.record || {};
+                }
+                
+                // Обновляем нужный бин
+                currentData[binName] = data;
+                
+                // Отправляем обновленные данные
+                const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${JSON_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-Master-Key': JSON_BIN_MASTER_KEY,
+                        'X-Access-Key': JSON_BIN_ACCESS_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentData)
+                });
+                
+                if (!updateResponse.ok) {
+                    throw new Error(`HTTP error! status: ${updateResponse.status}`);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error(`Ошибка при обновлении ${binName}:`, error);
+                throw error;
+            }
+        }
+        
+        // Вспомогательные функции
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        function showNotification(text, type = 'info') {
+            notificationText.textContent = text;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Имитация входящего звонка каждые 60 секунд (для демонстрации)
+        setInterval(() => {
+            if (currentUser && !callInProgress && Math.random() > 0.5) {
+                simulateIncomingCall();
+            }
+        }, 60000);
+        
+        // Добавляем обработчик для демонстрации WebRTC (если браузер поддерживает)
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            console.log('WebRTC поддерживается браузером');
+        } else {
+            console.warn('WebRTC не поддерживается браузером');
+            showNotification('Ваш браузер не поддерживает видеозвонки', 'error');
+        }
     </script>
 </body>
 </html>
