@@ -744,139 +744,10 @@
         .api-status.offline {
             background-color: rgba(244, 67, 54, 0.8);
         }
-        
-        .api-controls {
-            position: fixed;
-            top: 40px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            z-index: 1000;
-        }
-        
-        .api-controls button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        
-        .api-controls button:hover {
-            background-color: rgba(67, 97, 238, 0.8);
-        }
-        
-        .api-debug {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            max-width: 300px;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .api-debug.visible {
-            display: block;
-        }
-        
-        .config-panel {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            max-width: 400px;
-            z-index: 1000;
-        }
-        
-        .config-panel h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #4cc9f0;
-        }
-        
-        .config-field {
-            margin-bottom: 8px;
-        }
-        
-        .config-field label {
-            display: inline-block;
-            width: 120px;
-            font-weight: bold;
-        }
-        
-        .config-field span {
-            display: inline-block;
-            width: 250px;
-            word-break: break-all;
-            background-color: rgba(255,255,255,0.1);
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        
-        .test-buttons {
-            display: flex;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        
-        .test-buttons button {
-            flex: 1;
-            padding: 5px;
-            border: none;
-            border-radius: 3px;
-            background-color: #4361ee;
-            color: white;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        
-        .test-buttons button:hover {
-            background-color: #3a56d4;
-        }
     </style>
 </head>
 <body>
-    <div class="config-panel" id="configPanel">
-        <h4>Конфигурация JSONBin</h4>
-        <div class="config-field">
-            <label>Bin ID:</label>
-            <span id="configBinId">Загрузка...</span>
-        </div>
-        <div class="config-field">
-            <label>Access Key:</label>
-            <span id="configAccessKey">Загрузка...</span>
-        </div>
-        <div class="config-field">
-            <label>Key ID:</label>
-            <span id="configKeyId">Загрузка...</span>
-        </div>
-        <div class="test-buttons">
-            <button id="testReadBtn">Тест чтения</button>
-            <button id="testWriteBtn">Тест записи</button>
-            <button id="testConfigBtn">Проверить конфиг</button>
-        </div>
-    </div>
-    
     <div class="api-status" id="apiStatus">API: Проверка...</div>
-    <div class="api-controls" id="apiControls">
-        <button id="refreshApiBtn">Обновить</button>
-        <button id="toggleDebugBtn">Отладка</button>
-        <button id="toggleConfigBtn">Конфиг</button>
-    </div>
-    <div class="api-debug" id="apiDebug"></div>
     
     <div class="container" id="appContainer">
         <div class="auth-container" id="authContainer">
@@ -1071,15 +942,15 @@
 
     <script>
         // ===== КОНФИГУРАЦИЯ JSONBIN.IO =====
-        // ВАШИ КЛЮЧИ ЗДЕСЬ:
+        // ВАШИ РЕАЛЬНЫЕ КЛЮЧИ:
         const JSONBIN_CONFIG = {
-            // Bin ID - замените на свой
-            BIN_ID: '67f8fe5eacd3cb34a8b8bf7a',
+            // ВАШ НОВЫЙ BIN ID
+            BIN_ID: '69884cadae596e708f1a1337',
             
-            // Access Key - ваш ключ
+            // Ваш Access Key
             ACCESS_KEY: '$2a$10$I2I96lPMR/JKjetj1oc93eTQG.dkoeYEtV1j88hu5qFK8D0yAq6k2',
             
-            // Access Key ID
+            // Ваш Access Key ID
             ACCESS_KEY_ID: '6987a97443b1c97be96d38ce',
             
             // Версия API
@@ -1089,17 +960,12 @@
             BASE_URL: 'https://api.jsonbin.io',
             
             // Получение заголовков
-            getHeaders: function(includeVersion = false) {
-                const headers = {
+            getHeaders: function() {
+                return {
                     'Content-Type': 'application/json',
-                    'X-Access-Key': this.ACCESS_KEY
+                    'X-Access-Key': this.ACCESS_KEY,
+                    'X-Bin-Name': 'SkyMessage Users Database'
                 };
-                
-                if (includeVersion) {
-                    headers['X-Bin-Versioning'] = 'false';
-                }
-                
-                return headers;
             },
             
             // Получение URL для операций
@@ -1108,10 +974,8 @@
                     return `${this.BASE_URL}/${this.API_VERSION}/b`;
                 } else if (operation === 'update') {
                     return `${this.BASE_URL}/${this.API_VERSION}/b/${this.BIN_ID}`;
-                } else if (operation === 'read') {
+                } else {
                     return `${this.BASE_URL}/${this.API_VERSION}/b/${this.BIN_ID}/${version}`;
-                } else if (operation === 'delete') {
-                    return `${this.BASE_URL}/${this.API_VERSION}/b/${this.BIN_ID}`;
                 }
             },
             
@@ -1119,44 +983,6 @@
             isValid: function() {
                 return this.BIN_ID && this.BIN_ID.length > 10 && 
                        this.ACCESS_KEY && this.ACCESS_KEY.length > 20;
-            },
-            
-            // Тестирование соединения
-            testConnection: async function() {
-                try {
-                    console.log('Тестирование соединения с JSONBin...');
-                    console.log('URL:', this.getUrl('read'));
-                    console.log('Headers:', this.getHeaders());
-                    
-                    const response = await fetch(this.getUrl('read'), {
-                        method: 'GET',
-                        headers: this.getHeaders()
-                    });
-                    
-                    console.log('Response status:', response.status);
-                    console.log('Response ok:', response.ok);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('Response data:', data);
-                        return { success: true, data: data };
-                    } else {
-                        const errorText = await response.text();
-                        console.log('Error response:', errorText);
-                        return { 
-                            success: false, 
-                            error: `HTTP ${response.status}: ${response.statusText}`,
-                            details: errorText
-                        };
-                    }
-                } catch (error) {
-                    console.log('Connection error:', error);
-                    return { 
-                        success: false, 
-                        error: error.message,
-                        details: error.stack
-                    };
-                }
             }
         };
         
@@ -1173,67 +999,26 @@
             // Статус соединения
             isOnline: false,
             lastError: null,
-            debugLog: [],
-            
-            // Добавление в лог отладки
-            addDebugLog: function(message, type = 'info') {
-                const logEntry = {
-                    timestamp: new Date().toLocaleTimeString(),
-                    message: message,
-                    type: type
-                };
-                this.debugLog.unshift(logEntry);
-                if (this.debugLog.length > 20) this.debugLog.pop();
-                this.updateDebugDisplay();
-            },
-            
-            // Обновление отладочного дисплея
-            updateDebugDisplay: function() {
-                const debugElement = document.getElementById('apiDebug');
-                if (debugElement) {
-                    debugElement.innerHTML = this.debugLog.map(log => 
-                        `<div style="color: ${log.type === 'error' ? '#ff6b6b' : log.type === 'success' ? '#51cf66' : '#ffffff'}">
-                            [${log.timestamp}] ${log.message}
-                        </div>`
-                    ).join('');
-                }
-            },
-            
-            // Обновление панели конфигурации
-            updateConfigDisplay: function() {
-                document.getElementById('configBinId').textContent = JSONBIN_CONFIG.BIN_ID;
-                document.getElementById('configAccessKey').textContent = JSONBIN_CONFIG.ACCESS_KEY.substring(0, 20) + '...';
-                document.getElementById('configKeyId').textContent = JSONBIN_CONFIG.ACCESS_KEY_ID;
-            },
             
             // Инициализация
             init: async function() {
-                this.addDebugLog('Инициализация GlobalDatabase...');
-                this.updateConfigDisplay();
+                console.log('Инициализация GlobalDatabase с вашим BIN:', JSONBIN_CONFIG.BIN_ID);
                 
                 // Проверяем конфигурацию
-                const configValid = JSONBIN_CONFIG.isValid();
-                
-                if (!configValid) {
-                    this.addDebugLog('ОШИБКА: Конфигурация JSONBin не настроена!', 'error');
-                    this.addDebugLog('Пожалуйста, настройте BIN_ID и ACCESS_KEY', 'error');
+                if (!JSONBIN_CONFIG.isValid()) {
+                    console.error('Конфигурация JSONBin не настроена!');
                     this.isOnline = false;
                     this.updateApiStatus(false, 'Не настроен');
                     await this.loadFromLocalStorage();
                 } else {
-                    this.addDebugLog('Конфигурация проверена, тестируем соединение...', 'info');
-                    const testResult = await this.testConnection();
+                    this.isOnline = await this.checkConnection();
                     
-                    if (testResult.success) {
-                        this.isOnline = true;
-                        this.addDebugLog('JSONBin.io доступен, загружаем данные...', 'success');
+                    if (this.isOnline) {
+                        console.log('JSONBin.io доступен, загружаем данные...');
                         await this.loadFromJsonBin();
                         this.updateApiStatus(true, 'JSONBin.io');
                     } else {
-                        this.isOnline = false;
-                        this.lastError = testResult.error;
-                        this.addDebugLog(`JSONBin.io недоступен: ${testResult.error}`, 'warning');
-                        this.addDebugLog('Используем локальные данные...', 'warning');
+                        console.warn('JSONBin.io недоступен, используем локальные данные...');
                         await this.loadFromLocalStorage();
                         this.updateApiStatus(false, 'Локально');
                     }
@@ -1241,52 +1026,51 @@
                 
                 // Если база пуста, создаем демо-пользователей
                 if (this.isEmpty()) {
-                    this.addDebugLog('База данных пуста, создаем демо-пользователей...', 'info');
+                    console.log('База данных пуста, создаем демо-пользователей...');
                     this.createDemoUsers();
                     await this.save();
                 }
                 
-                this.addDebugLog(`GlobalDatabase инициализирована. Пользователей: ${this.getUsersCount()}`, 'success');
+                console.log('GlobalDatabase инициализирована. Пользователей:', this.getUsersCount());
             },
             
-            // Тестирование соединения
-            testConnection: async function() {
+            // Проверка соединения с JSONBin
+            checkConnection: async function() {
                 try {
-                    this.addDebugLog('Тестирование соединения с JSONBin.io...', 'info');
+                    console.log('Проверка соединения с JSONBin.io...');
+                    console.log('URL:', JSONBIN_CONFIG.getUrl('read'));
                     
                     const response = await fetch(JSONBIN_CONFIG.getUrl('read'), {
                         method: 'GET',
                         headers: JSONBIN_CONFIG.getHeaders()
                     });
                     
-                    const result = response.ok;
-                    this.addDebugLog(`Соединение: ${result ? 'OK' : 'FAIL'} (${response.status})`, 
-                                   result ? 'success' : 'error');
+                    console.log('Статус ответа:', response.status);
                     
-                    if (!response.ok) {
+                    if (response.ok) {
+                        console.log('Соединение успешно установлено');
+                        return true;
+                    } else if (response.status === 404) {
+                        // Бин пустой или не существует - это нормально при первом запуске
+                        console.log('Бин пустой или не существует (404)');
+                        return true;
+                    } else {
                         const errorText = await response.text();
-                        this.lastError = `HTTP ${response.status}: ${errorText.substring(0, 100)}`;
-                        return { success: false, error: this.lastError };
+                        console.error('Ошибка соединения:', response.status, errorText);
+                        return false;
                     }
-                    
-                    return { success: true };
                 } catch (error) {
-                    this.lastError = error.message;
-                    this.addDebugLog(`Ошибка соединения: ${error.message}`, 'error');
-                    return { success: false, error: error.message };
+                    console.error('Ошибка соединения с JSONBin:', error);
+                    return false;
                 }
             },
             
             // Загрузка из JSONBin
             loadFromJsonBin: async function() {
                 try {
-                    const url = JSONBIN_CONFIG.getUrl('read');
-                    const headers = JSONBIN_CONFIG.getHeaders();
-                    
-                    this.addDebugLog('Загрузка данных с JSONBin.io...', 'info');
-                    const response = await fetch(url, {
+                    const response = await fetch(JSONBIN_CONFIG.getUrl('read'), {
                         method: 'GET',
-                        headers: headers
+                        headers: JSONBIN_CONFIG.getHeaders()
                     });
                     
                     if (response.ok) {
@@ -1302,15 +1086,21 @@
                         // Сохраняем локальную копию
                         this.saveToLocalStorage();
                         
-                        this.addDebugLog(`Загружено ${this.cache.users.length} пользователей`, 'success');
+                        console.log('Загружено из JSONBin.io:', this.cache.users.length, 'пользователей');
+                        return true;
+                    } else if (response.status === 404) {
+                        // Бин пустой - это нормально
+                        console.log('Бин пустой, начинаем с чистого листа');
+                        this.cache.users = [];
+                        this.cache.onlineUsers = {};
                         return true;
                     } else {
                         const errorText = await response.text();
                         throw new Error(`HTTP ${response.status}: ${errorText}`);
                     }
                 } catch (error) {
+                    console.error('Ошибка загрузки из JSONBin.io:', error);
                     this.lastError = error.message;
-                    this.addDebugLog(`Ошибка загрузки: ${error.message}`, 'error');
                     return await this.loadFromLocalStorage();
                 }
             },
@@ -1324,16 +1114,15 @@
                         this.cache.users = parsed.users || [];
                         this.cache.onlineUsers = parsed.onlineUsers || {};
                         this.cache.lastFetch = Date.now();
-                        this.addDebugLog(`Загружено ${this.cache.users.length} пользователей из localStorage`, 'info');
+                        console.log('Загружено из localStorage:', this.cache.users.length, 'пользователей');
                         return true;
                     }
                 } catch (e) {
-                    this.addDebugLog(`Ошибка загрузки из localStorage: ${e.message}`, 'error');
+                    console.error('Ошибка загрузки из localStorage:', e);
                 }
                 
                 this.cache.users = [];
                 this.cache.onlineUsers = {};
-                this.addDebugLog('Локальные данные не найдены', 'warning');
                 return false;
             },
             
@@ -1343,22 +1132,18 @@
                     const data = {
                         users: this.cache.users,
                         onlineUsers: this.cache.onlineUsers,
-                        lastUpdate: Date.now(),
-                        metadata: {
-                            source: 'SkyMessage Local Backup',
-                            version: '1.0'
-                        }
+                        lastUpdate: Date.now()
                     };
                     localStorage.setItem('skyMessageJsonBinBackup', JSON.stringify(data));
                 } catch (e) {
-                    this.addDebugLog(`Ошибка сохранения в localStorage: ${e.message}`, 'error');
+                    console.error('Ошибка сохранения в localStorage:', e);
                 }
             },
             
             // Сохранение в JSONBin
             saveToJsonBin: async function() {
                 if (!this.isOnline) {
-                    this.addDebugLog('Офлайн режим, сохраняем только локально', 'warning');
+                    console.log('Офлайн режим, сохраняем только локально');
                     this.saveToLocalStorage();
                     return false;
                 }
@@ -1371,32 +1156,30 @@
                         metadata: {
                             app: 'SkyMessage',
                             version: '1.0',
-                            totalUsers: this.cache.users.length,
-                            onlineCount: Object.keys(this.cache.onlineUsers).length
+                            totalUsers: this.cache.users.length
                         }
                     };
                     
-                    const url = JSONBIN_CONFIG.getUrl('update');
-                    const headers = JSONBIN_CONFIG.getHeaders();
+                    console.log('Сохранение данных в JSONBin...');
                     
-                    this.addDebugLog('Сохранение данных на JSONBin.io...', 'info');
-                    const response = await fetch(url, {
+                    const response = await fetch(JSONBIN_CONFIG.getUrl('update'), {
                         method: 'PUT',
-                        headers: headers,
+                        headers: JSONBIN_CONFIG.getHeaders(),
                         body: JSON.stringify(data)
                     });
                     
                     if (response.ok) {
                         const result = await response.json();
-                        this.addDebugLog(`Успешно сохранено. Metadata ID: ${result.metadata?.id || 'N/A'}`, 'success');
+                        console.log('Успешно сохранено в JSONBin.io');
+                        console.log('Metadata:', result.metadata);
                         return true;
                     } else {
                         const errorText = await response.text();
                         throw new Error(`HTTP ${response.status}: ${errorText}`);
                     }
                 } catch (error) {
+                    console.error('Ошибка сохранения в JSONBin.io:', error);
                     this.lastError = error.message;
-                    this.addDebugLog(`Ошибка сохранения: ${error.message}`, 'error');
                     this.saveToLocalStorage();
                     return false;
                 }
@@ -1404,7 +1187,7 @@
             
             // Общий метод сохранения
             save: async function() {
-                this.addDebugLog('Сохранение данных...', 'info');
+                console.log('Сохранение данных...');
                 const savedOnline = await this.saveToJsonBin();
                 if (!savedOnline) {
                     this.saveToLocalStorage();
@@ -1497,7 +1280,7 @@
                 ];
                 
                 this.cache.users = demoUsers;
-                this.addDebugLog(`Создано ${demoUsers.length} демо-пользователей`, 'success');
+                console.log('Создано демо-пользователей:', demoUsers.length);
             },
             
             // Получение количества пользователей
@@ -1519,13 +1302,13 @@
             addUser: async function(user) {
                 // Проверяем, нет ли уже такого пользователя
                 if (this.userExists(user.username)) {
-                    this.addDebugLog(`Пользователь ${user.username} уже существует`, 'warning');
+                    console.log('Пользователь уже существует:', user.username);
                     return false;
                 }
                 
                 this.cache.users.push(user);
                 await this.save();
-                this.addDebugLog(`Добавлен новый пользователь: ${user.username}`, 'success');
+                console.log('Добавлен новый пользователь:', user.username);
                 return true;
             },
             
@@ -1536,7 +1319,7 @@
                     // В фоне обновляем данные
                     this.loadFromJsonBin().then(updated => {
                         if (updated) {
-                            this.addDebugLog('Данные обновлены из JSONBin.io', 'info');
+                            console.log('Данные обновлены из JSONBin.io');
                         }
                     });
                 }
@@ -1577,7 +1360,7 @@
                     }
                     
                     await this.save();
-                    this.addDebugLog(`Статус пользователя ${user.username} обновлен: ${isOnline ? 'online' : 'offline'}`, 'info');
+                    console.log(`Статус пользователя ${user.username} обновлен: ${isOnline ? 'online' : 'offline'}`);
                 }
             },
             
@@ -1599,7 +1382,7 @@
                 
                 if (changed) {
                     await this.save();
-                    this.addDebugLog('Статусы демо-пользователей обновлены', 'info');
+                    console.log('Статусы демо-пользователей обновлены');
                 }
             },
             
@@ -1621,73 +1404,22 @@
             // Синхронизация с сервером
             syncWithServer: async function() {
                 if (!this.isOnline) {
-                    this.addDebugLog('Офлайн режим, синхронизация невозможна', 'warning');
+                    console.log('Офлайн режим, синхронизация невозможна');
                     return false;
                 }
                 
                 try {
-                    this.addDebugLog('Синхронизация с JSONBin.io...', 'info');
+                    console.log('Синхронизация с JSONBin.io...');
                     const success = await this.loadFromJsonBin();
                     if (success) {
-                        this.addDebugLog('Синхронизация успешна', 'success');
+                        console.log('Синхронизация успешна');
                     } else {
-                        this.addDebugLog('Синхронизация не удалась', 'error');
+                        console.log('Синхронизация не удалась');
                     }
                     return success;
                 } catch (error) {
-                    this.addDebugLog(`Ошибка синхронизации: ${error.message}`, 'error');
+                    console.error('Ошибка синхронизации:', error);
                     return false;
-                }
-            },
-            
-            // Тестирование чтения
-            testRead: async function() {
-                this.addDebugLog('Тест чтения данных...', 'info');
-                try {
-                    const result = await JSONBIN_CONFIG.testConnection();
-                    if (result.success) {
-                        this.addDebugLog('Тест чтения: УСПЕШНО', 'success');
-                        return result;
-                    } else {
-                        this.addDebugLog(`Тест чтения: ОШИБКА - ${result.error}`, 'error');
-                        return result;
-                    }
-                } catch (error) {
-                    this.addDebugLog(`Тест чтения: ИСКЛЮЧЕНИЕ - ${error.message}`, 'error');
-                    return { success: false, error: error.message };
-                }
-            },
-            
-            // Тестирование записи
-            testWrite: async function() {
-                this.addDebugLog('Тест записи данных...', 'info');
-                try {
-                    const testData = {
-                        test: true,
-                        timestamp: Date.now(),
-                        message: 'Тестовые данные из SkyMessage',
-                        app: 'SkyMessage Test'
-                    };
-                    
-                    const response = await fetch(JSONBIN_CONFIG.getUrl('update'), {
-                        method: 'PUT',
-                        headers: JSONBIN_CONFIG.getHeaders(),
-                        body: JSON.stringify(testData)
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        this.addDebugLog('Тест записи: УСПЕШНО', 'success');
-                        this.addDebugLog(`Metadata ID: ${result.metadata?.id || 'N/A'}`, 'info');
-                        return { success: true, data: result };
-                    } else {
-                        const errorText = await response.text();
-                        this.addDebugLog(`Тест записи: ОШИБКА - HTTP ${response.status}: ${errorText}`, 'error');
-                        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
-                    }
-                } catch (error) {
-                    this.addDebugLog(`Тест записи: ИСКЛЮЧЕНИЕ - ${error.message}`, 'error');
-                    return { success: false, error: error.message };
                 }
             }
         };
@@ -1705,7 +1437,7 @@
             
             // Инициализация
             init: function() {
-                GlobalDatabase.addDebugLog('Инициализация UserData...', 'info');
+                console.log('Инициализация UserData...');
                 this.loadCurrentUser();
                 
                 if (this.currentUser) {
@@ -1720,10 +1452,10 @@
                     const userData = localStorage.getItem('skyMessageCurrentUser');
                     if (userData) {
                         this.currentUser = JSON.parse(userData);
-                        GlobalDatabase.addDebugLog(`Загружен текущий пользователь: ${this.currentUser.username}`, 'success');
+                        console.log('Загружен текущий пользователь:', this.currentUser.username);
                     }
                 } catch (e) {
-                    GlobalDatabase.addDebugLog(`Ошибка загрузки текущего пользователя: ${e.message}`, 'error');
+                    console.error('Ошибка загрузки текущего пользователя:', e);
                     this.currentUser = null;
                 }
             },
@@ -1741,10 +1473,10 @@
                     const contactsData = localStorage.getItem(`skyMessageContacts_${this.currentUser.username}`);
                     if (contactsData) {
                         this.contacts = JSON.parse(contactsData);
-                        GlobalDatabase.addDebugLog(`Загружено контактов: ${this.contacts.length}`, 'info');
+                        console.log('Загружено контактов:', this.contacts.length);
                     }
                 } catch (e) {
-                    GlobalDatabase.addDebugLog(`Ошибка загрузки контактов: ${e.message}`, 'error');
+                    console.error('Ошибка загрузки контактов:', e);
                     this.contacts = [];
                 }
             },
@@ -1760,10 +1492,10 @@
                     const messagesData = localStorage.getItem(`skyMessageMessages_${this.currentUser.username}`);
                     if (messagesData) {
                         this.messages = JSON.parse(messagesData);
-                        GlobalDatabase.addDebugLog(`Загружено чатов: ${Object.keys(this.messages).length}`, 'info');
+                        console.log('Загружено чатов:', Object.keys(this.messages).length);
                     }
                 } catch (e) {
-                    GlobalDatabase.addDebugLog(`Ошибка загрузки сообщений: ${e.message}`, 'error');
+                    console.error('Ошибка загрузки сообщений:', e);
                     this.messages = {};
                 }
             },
@@ -1773,7 +1505,7 @@
                 localStorage.setItem(`skyMessageMessages_${this.currentUser.username}`, JSON.stringify(this.messages));
             },
             
-            // Создание начальных контакты
+            // Создание начальных контактов
             createInitialContacts: function() {
                 // Берем первых 3 пользователя из глобальной базы
                 const allUsers = GlobalDatabase.getAllUsersExcept(this.currentUser.id);
@@ -1817,7 +1549,7 @@
                 
                 this.saveMessages();
                 
-                GlobalDatabase.addDebugLog(`Созданы начальные контакты: ${initialContacts.length}`, 'success');
+                console.log('Созданы начальные контакты:', initialContacts.length);
             },
             
             // Получение текущего времени
@@ -1870,7 +1602,7 @@
                     this.saveMessages();
                 }
                 
-                GlobalDatabase.addDebugLog(`Контакт добавлен: ${user.name}`, 'success');
+                console.log(`Контакт добавлен: ${user.name}`);
                 return contactToAdd;
             },
             
@@ -1895,7 +1627,7 @@
                 this.contacts = [];
                 this.messages = {};
                 localStorage.removeItem('skyMessageCurrentUser');
-                GlobalDatabase.addDebugLog('Данные пользователя очищены', 'info');
+                console.log('Данные пользователя очищены');
             }
         };
         
@@ -1971,68 +1703,6 @@
                 messageInput.addEventListener('input', function() {
                     this.style.height = 'auto';
                     this.style.height = (this.scrollHeight) + 'px';
-                });
-                
-                // Кнопки управления API
-                document.getElementById('refreshApiBtn').addEventListener('click', async function() {
-                    GlobalDatabase.addDebugLog('Принудительное обновление API...', 'info');
-                    const wasOnline = GlobalDatabase.isOnline;
-                    const testResult = await GlobalDatabase.testConnection();
-                    GlobalDatabase.isOnline = testResult.success;
-                    
-                    if (GlobalDatabase.isOnline && !wasOnline) {
-                        await GlobalDatabase.loadFromJsonBin();
-                    }
-                    
-                    GlobalDatabase.updateApiStatus(GlobalDatabase.isOnline, GlobalDatabase.isOnline ? 'JSONBin.io' : 'Локально');
-                    
-                    if (UserData.currentUser) {
-                        renderContacts();
-                    }
-                });
-                
-                document.getElementById('toggleDebugBtn').addEventListener('click', function() {
-                    const debugElement = document.getElementById('apiDebug');
-                    debugElement.classList.toggle('visible');
-                });
-                
-                document.getElementById('toggleConfigBtn').addEventListener('click', function() {
-                    const configPanel = document.getElementById('configPanel');
-                    configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none';
-                });
-                
-                // Кнопки тестирования
-                document.getElementById('testReadBtn').addEventListener('click', async function() {
-                    const result = await GlobalDatabase.testRead();
-                    showNotification('message', 
-                        result.success ? 'Тест чтения: УСПЕХ' : 'Тест чтения: ОШИБКА',
-                        result.success ? 'Данные успешно прочитаны с JSONBin.io' : result.error
-                    );
-                });
-                
-                document.getElementById('testWriteBtn').addEventListener('click', async function() {
-                    const result = await GlobalDatabase.testWrite();
-                    showNotification('message',
-                        result.success ? 'Тест записи: УСПЕХ' : 'Тест записи: ОШИБКА',
-                        result.success ? 'Данные успешно записаны на JSONBin.io' : result.error
-                    );
-                });
-                
-                document.getElementById('testConfigBtn').addEventListener('click', function() {
-                    const isValid = JSONBIN_CONFIG.isValid();
-                    GlobalDatabase.addDebugLog(`Проверка конфигурации: ${isValid ? 'ВАЛИДНА' : 'НЕВАЛИДНА'}`, 
-                        isValid ? 'success' : 'error');
-                    
-                    if (!isValid) {
-                        GlobalDatabase.addDebugLog('Проблемы с конфигурацией:', 'error');
-                        GlobalDatabase.addDebugLog(`BIN_ID: ${JSONBIN_CONFIG.BIN_ID}`, 'error');
-                        GlobalDatabase.addDebugLog(`ACCESS_KEY: ${JSONBIN_CONFIG.ACCESS_KEY ? 'Указан' : 'Не указан'}`, 'error');
-                    }
-                    
-                    showNotification('message',
-                        isValid ? 'Конфигурация: ОК' : 'Конфигурация: ОШИБКА',
-                        isValid ? 'Конфигурация JSONBin корректна' : 'Проверьте BIN_ID и ACCESS_KEY'
-                    );
                 });
             }
             
@@ -2256,9 +1926,9 @@
                 searchUserInput.value = '';
                 document.getElementById('searchError').style.display = 'none';
                 
-                GlobalDatabase.addDebugLog(`Пользователь вошел: ${UserData.currentUser.username}`, 'success');
-                GlobalDatabase.addDebugLog(`Всего пользователей: ${GlobalDatabase.getUsersCount()}`, 'info');
-                GlobalDatabase.addDebugLog(`Контактов пользователя: ${UserData.contacts.length}`, 'info');
+                console.log('Пользователь вошел:', UserData.currentUser.username);
+                console.log('Всего пользователей в глобальной базе:', GlobalDatabase.getUsersCount());
+                console.log('Контактов пользователя:', UserData.contacts.length);
                 
                 startAutoRefresh();
             }
@@ -2314,7 +1984,7 @@
                     return;
                 }
                 
-                GlobalDatabase.addDebugLog(`Поиск пользователей: ${query}`, 'info');
+                console.log('Поиск пользователей по запросу:', query);
                 const searchResults = GlobalDatabase.searchUsers(query, UserData.currentUser?.id);
                 
                 if (searchResults.length === 0) {
@@ -2608,22 +2278,21 @@
                 }, 5000);
             }
             
-            // Автоматическая проверка конфигурации при загрузке
-            GlobalDatabase.checkConfig();
-            
             // Дебаг информация
             console.log('=== SkyMessage Debug Info ===');
-            console.log('Текущая конфигурация:');
-            console.log('- BIN_ID:', JSONBIN_CONFIG.BIN_ID);
-            console.log('- ACCESS_KEY_ID:', JSONBIN_CONFIG.ACCESS_KEY_ID);
-            console.log('- ACCESS_KEY:', JSONBIN_CONFIG.ACCESS_KEY ? 'Указан' : 'Не указан');
-            console.log('=== Управление ===');
-            console.log('Ctrl+Shift+D - очистить все данные');
-            console.log('Кнопка "Обновить" - перепроверить соединение с API');
-            console.log('Кнопка "Отладка" - показать/скрыть лог отладки');
-            console.log('Кнопка "Конфиг" - показать/скрыть панель конфигурации');
-            console.log('=== Тестирование ===');
-            console.log('Используйте кнопки в панели конфигурации для тестирования');
+            console.log('Ваш BIN ID:', JSONBIN_CONFIG.BIN_ID);
+            console.log('Access Key ID:', JSONBIN_CONFIG.ACCESS_KEY_ID);
+            console.log('URL вашего BIN:', `https://api.jsonbin.io/v3/b/${JSONBIN_CONFIG.BIN_ID}`);
+            console.log('Тестовые пользователи (пароль: password123):');
+            console.log('- alex_sky (Александр)');
+            console.log('- maria_chat (Мария)');
+            console.log('- max_talk (Максим)');
+            console.log('- anna_web (Анна)');
+            console.log('- dmitry_conn (Дмитрий)');
+            console.log('=== Инструкция ===');
+            console.log('1. Войдите как alex_sky / password123');
+            console.log('2. Нажмите Ctrl+Shift+D для очистки данных');
+            console.log('3. Проверьте статус API в правом верхнем углу');
             
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.shiftKey && e.key === 'D') {
